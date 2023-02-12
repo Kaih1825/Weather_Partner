@@ -1,4 +1,4 @@
-# weather_partner
+# Weather Partner
 
 A new Flutter project.
 
