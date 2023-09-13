@@ -1,5 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:weather_partner/Screens/HomeScreen.dart';
 
 void main() {
   runApp(const Main());
@@ -13,8 +14,10 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
-  static final _defaultLightColorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.pink, brightness: Brightness.light);
-  static final _defaultDarkColorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.blue, brightness: Brightness.dark);
+  static final _defaultLightColorScheme = ColorScheme.fromSwatch(
+      primarySwatch: Colors.blue, brightness: Brightness.light);
+  static final _defaultDarkColorScheme = ColorScheme.fromSwatch(
+      primarySwatch: Colors.blue, brightness: Brightness.dark);
 
   @override
   void initState() {
@@ -28,19 +31,14 @@ class _MainState extends State<Main> {
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(useMaterial3: true, colorScheme: lightDynamic ?? _defaultLightColorScheme),
-          darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark, colorScheme: darkDynamic ?? _defaultDarkColorScheme),
-          home: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text(
-                  "Save",
-                ),
-              ),
-            ),
-          ),
+          theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: lightDynamic ?? _defaultLightColorScheme),
+          darkTheme: ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              colorScheme: darkDynamic ?? _defaultDarkColorScheme),
+          home: const HomeScreen(),
         );
       },
     );
