@@ -10,6 +10,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   var controller = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,54 +26,46 @@ class _HomeScreenState extends State<HomeScreen> {
           DraggableScrollableSheet(
             minChildSize: 0.1,
             initialChildSize: 0.1,
-            maxChildSize: 1,
+            maxChildSize: 0.5,
             builder: (BuildContext context, ScrollController scrollController) {
               return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(50),
-                      topRight: Radius.circular(50),
-                    ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(50),
+                    topRight: Radius.circular(50),
                   ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.1,
+                ),
+                child: ListView.builder(
+                  padding: EdgeInsets.all(10),
+                  controller: scrollController,
+                  itemCount: 10,
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Column(
                           children: [
-                            Container(
-                              width: 50,
-                              height: 10,
-                              color: GetColor.getOnSurfaceVariant(
-                                  Theme.of(context)),
+                            Align(
+                              alignment: Alignment.center,
+                              child: Container(
+                                width: 30,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(40)
+                                ),
+                              ),
                             ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: IconButton(
-                                      onPressed: () {},
-                                      icon: const Icon(Icons.abc)),
-                                )
-                              ],
-                            ),
+                            IconButton(onPressed: (){}, icon: Icon(Icons.abc))
                           ],
                         ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          controller: scrollController,
-                          itemCount: 50,
-                          itemBuilder: (BuildContext context, int index) {
-                            return ListTile(
-                              title: Text("Item$index"),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ));
+                      );
+                    }
+                    return Text(index.toString());
+                  },
+                ),
+              );
             },
           )
         ],
