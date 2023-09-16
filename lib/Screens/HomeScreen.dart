@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,6 +11,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   var controller = ScrollController();
+  var sourceType = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text("sss"),
           ),
           DraggableScrollableSheet(
+            snap: true,
             minChildSize: 0.1,
             initialChildSize: 0.1,
             maxChildSize: 0.5,
@@ -52,12 +55,47 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 30,
                                 height: 5,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(40)
-                                ),
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(40)),
                               ),
                             ),
-                            IconButton(onPressed: (){}, icon: Icon(Icons.abc))
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                splashColor: Colors.transparent,
+                              ),
+                              child: BottomNavigationBar(
+                                backgroundColor: Colors.transparent,
+                                onTap: (v) {
+                                  setState(() {
+                                    sourceType = v;
+                                  });
+                                },
+                                elevation: 0,
+                                currentIndex: sourceType,
+                                items: [
+                                  BottomNavigationBarItem(
+                                    icon: SvgPicture.asset(
+                                      "assets/roc_cwa.svg",
+                                      colorFilter: ColorFilter.mode(
+                                          sourceType == 0
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .outline,
+                                          BlendMode.srcIn),
+                                      width: 30,
+                                    ),
+                                    label: "中央氣象署",
+                                  ),
+                                  const BottomNavigationBarItem(
+                                    icon: Icon(Icons.cloud),
+                                    label: "CBC",
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       );
