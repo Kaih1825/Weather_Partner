@@ -10,6 +10,7 @@
 .svn/
 migrate_working_dir/
 /lib/ApiKeys/ApiKeys.dart
+/lib/ApiKeys/
 
 # IntelliJ related
 *.iml
