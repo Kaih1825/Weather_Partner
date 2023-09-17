@@ -10,8 +10,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  var controller = ScrollController();
-  var sourceType = 0;
+  var _sourceType = 0;
+  var _scrollUpLineIsTouching = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,32 +31,70 @@ class _HomeScreenState extends State<HomeScreen> {
             initialChildSize: 0.1,
             maxChildSize: 0.5,
             builder: (BuildContext context, ScrollController scrollController) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50),
-                    topRight: Radius.circular(50),
-                  ),
-                ),
-                child: ListView.builder(
-                  padding: EdgeInsets.all(10),
+              return NotificationListener(
+                onNotification: (scrollNotification) {
+                  if (scrollNotification is ScrollStartNotification) {
+                    _scrollUpLineIsTouching = true;
+                    setState(() {});
+                  } else if (scrollNotification is ScrollEndNotification) {
+                    _scrollUpLineIsTouching = false;
+                    setState(() {});
+                  }
+                  return true;
+                },
+                child: SingleChildScrollView(
                   controller: scrollController,
-                  itemCount: 10,
-                  itemBuilder: (BuildContext context, int index) {
-                    if (index == 0) {
-                      return Padding(
+                  child: Container(
+                      height: MediaQuery.of(context).size.height / 2,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(50),
+                          topRight: Radius.circular(50),
+                        ),
+                      ),
+                      child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Column(
                           children: [
                             Align(
                               alignment: Alignment.center,
-                              child: Container(
-                                width: 30,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                    color: Colors.grey,
-                                    borderRadius: BorderRadius.circular(40)),
+                              child: SizedBox(
+                                width: 60,
+                                height: 10,
+                                child: InkWell(
+                                  onTapDown: (_) {
+                                    _scrollUpLineIsTouching = true;
+                                    setState(() {});
+                                  },
+                                  onTapUp: (_) {
+                                    _scrollUpLineIsTouching = false;
+                                    setState(() {});
+                                  },
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      width: 50 +
+                                          (10 *
+                                              (_scrollUpLineIsTouching
+                                                  ? 1
+                                                  : 0)),
+                                      height: 8 +
+                                          (2 *
+                                              (_scrollUpLineIsTouching
+                                                  ? 1
+                                                  : 0)),
+                                      decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .outlineVariant,
+                                          borderRadius:
+                                              BorderRadius.circular(40)),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                             Theme(
@@ -67,17 +105,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.transparent,
                                 onTap: (v) {
                                   setState(() {
-                                    sourceType = v;
+                                    _sourceType = v;
                                   });
                                 },
                                 elevation: 0,
-                                currentIndex: sourceType,
+                                currentIndex: _sourceType,
                                 items: [
                                   BottomNavigationBarItem(
                                     icon: SvgPicture.asset(
                                       "assets/roc_cwa.svg",
                                       colorFilter: ColorFilter.mode(
-                                          sourceType == 0
+                                          _sourceType == 0
                                               ? Theme.of(context)
                                                   .colorScheme
                                                   .primary
@@ -96,12 +134,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             ),
+                            Expanded(
+                              child: NotificationListener(
+                                onNotification: (n) {
+                                  return true;
+                                },
+                                child: ListView.builder(
+                                  itemCount: 100,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    return Text("ss");
+                                  },
+                                ),
+                              ),
+                            )
                           ],
                         ),
-                      );
-                    }
-                    return Text(index.toString());
-                  },
+                      )),
                 ),
               );
             },
