@@ -14,10 +14,10 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
-  static final _defaultLightColorScheme = ColorScheme.fromSwatch(
-      primarySwatch: Colors.blue, brightness: Brightness.light);
-  static final _defaultDarkColorScheme = ColorScheme.fromSwatch(
-      primarySwatch: Colors.blue, brightness: Brightness.dark);
+  static final _defaultLightColorScheme = ColorScheme.fromSeed(
+      seedColor: Colors.blue, brightness: Brightness.light);
+  static final _defaultDarkColorScheme =
+      ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
 
   @override
   void initState() {

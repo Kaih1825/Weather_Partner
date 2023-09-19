@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:weather_partner/Screens/AddPlce.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -57,94 +58,137 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Column(
                           children: [
-                            Align(
-                              alignment: Alignment.center,
-                              child: SizedBox(
-                                width: 60,
-                                height: 10,
-                                child: InkWell(
-                                  onTapDown: (_) {
-                                    _scrollUpLineIsTouching = true;
-                                    setState(() {});
-                                  },
-                                  onTapUp: (_) {
-                                    _scrollUpLineIsTouching = false;
-                                    setState(() {});
-                                  },
-                                  child: Align(
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.1,
+                              child: Column(
+                                children: [
+                                  Align(
                                     alignment: Alignment.center,
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 200),
-                                      width: 50 +
-                                          (10 *
-                                              (_scrollUpLineIsTouching
-                                                  ? 1
-                                                  : 0)),
-                                      height: 8 +
-                                          (2 *
-                                              (_scrollUpLineIsTouching
-                                                  ? 1
-                                                  : 0)),
-                                      decoration: BoxDecoration(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .outlineVariant,
-                                          borderRadius:
-                                              BorderRadius.circular(40)),
+                                    child: SizedBox(
+                                      width: 60,
+                                      height: 10,
+                                      child: InkWell(
+                                        onTapDown: (_) {
+                                          _scrollUpLineIsTouching = true;
+                                          setState(() {});
+                                        },
+                                        onTapUp: (_) {
+                                          _scrollUpLineIsTouching = false;
+                                          setState(() {});
+                                        },
+                                        child: Align(
+                                          alignment: Alignment.center,
+                                          child: AnimatedContainer(
+                                            duration: const Duration(
+                                                milliseconds: 200),
+                                            width: 50 +
+                                                (10 *
+                                                    (_scrollUpLineIsTouching
+                                                        ? 1
+                                                        : 0)),
+                                            height: 8 +
+                                                (2 *
+                                                    (_scrollUpLineIsTouching
+                                                        ? 1
+                                                        : 0)),
+                                            decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .outlineVariant,
+                                                borderRadius:
+                                                    BorderRadius.circular(40)),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            Theme(
-                              data: Theme.of(context).copyWith(
-                                splashColor: Colors.transparent,
-                              ),
-                              child: BottomNavigationBar(
-                                backgroundColor: Colors.transparent,
-                                onTap: (v) {
-                                  setState(() {
-                                    _sourceType = v;
-                                  });
-                                },
-                                elevation: 0,
-                                currentIndex: _sourceType,
-                                items: [
-                                  BottomNavigationBarItem(
-                                    icon: SvgPicture.asset(
-                                      "assets/roc_cwa.svg",
-                                      colorFilter: ColorFilter.mode(
-                                          _sourceType == 0
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .outline,
-                                          BlendMode.srcIn),
-                                      width: 30,
+                                  Theme(
+                                    data: Theme.of(context).copyWith(
+                                      splashColor: Colors.transparent,
                                     ),
-                                    label: "中央氣象署",
-                                  ),
-                                  const BottomNavigationBarItem(
-                                    icon: Icon(Icons.cloud),
-                                    label: "CBC",
+                                    child: BottomNavigationBar(
+                                      backgroundColor: Colors.transparent,
+                                      onTap: (v) {
+                                        setState(() {
+                                          _sourceType = v;
+                                        });
+                                      },
+                                      elevation: 0,
+                                      currentIndex: _sourceType,
+                                      items: [
+                                        BottomNavigationBarItem(
+                                          icon: SvgPicture.asset(
+                                            "assets/roc_cwa.svg",
+                                            colorFilter: ColorFilter.mode(
+                                                _sourceType == 0
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .primary
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .outline,
+                                                BlendMode.srcIn),
+                                            width: 30,
+                                          ),
+                                          label: "中央氣象署",
+                                        ),
+                                        const BottomNavigationBarItem(
+                                          icon: Icon(Icons.cloud),
+                                          label: "CBC",
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      "地點：",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18),
+                                    ),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (BuildContext context) {
+                                            return const AddPlace();
+                                          },
+                                        ),
+                                      );
+                                    },
+                                    child: const Row(
+                                      children: [Icon(Icons.add), Text("新增地點")],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
                             Expanded(
-                              child: NotificationListener(
-                                onNotification: (n) {
-                                  return true;
-                                },
-                                child: ListView.builder(
-                                  itemCount: 100,
-                                  itemBuilder:
-                                      (BuildContext context, int index) {
-                                    return Text("ss");
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                child: NotificationListener(
+                                  onNotification: (n) {
+                                    return true;
                                   },
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.all(0),
+                                    itemCount: 100,
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      return const Text("ss");
+                                    },
+                                  ),
                                 ),
                               ),
                             )
