@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
         fit: StackFit.expand,
         children: [
           Container(
-            color: GetColor.getSurface(Theme.of(context)),
+            color: Theme.of(context).colorScheme.surface,
             height: double.infinity,
             child: const Text("sss"),
           ),
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                       height: MediaQuery.of(context).size.height / 2,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        color: GetColor.getSurfaceContainer(Theme.of(context)),
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(50),
                           topRight: Radius.circular(50),
@@ -161,7 +161,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (BuildContext context) {
-                                            return const AddPlace();
+                                            return AddPlace(
+                                              placeType: _sourceType,
+                                            );
                                           },
                                         ),
                                       );
