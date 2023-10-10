@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:weather_partner/Screens/AddPlce.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,197 +12,248 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   var _sourceType = 0;
-  var _scrollUpLineIsTouching = false;
+  final _fabPageController = PageController();
+  late final _fabAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+  late final _fabTween =
+      Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _fabAnimation, curve: Curves.easeInOut));
+  var _placeInfo = {};
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fabAnimation.addListener(() {
+      setState(() {});
+    });
+    var recent = Hive.box("RecentWeather");
+    _placeInfo = recent.get("PlaceInfo") ?? {};
+    recent.watch().listen((event) {
+      try {
+        if (event.value["StationID"] != null) {
+          _placeInfo = {"SourceType": event.value["SourceType"], "StationID": event.value["StationID"]};
+          setState(() {});
+        }
+      } catch (ex) {}
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GetColor.getSurface(Theme.of(context)),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            color: Theme.of(context).colorScheme.surface,
-            height: double.infinity,
-            child: const Text("sss"),
-          ),
-          DraggableScrollableSheet(
-            snap: true,
-            minChildSize: 0.1,
-            initialChildSize: 0.1,
-            maxChildSize: 0.5,
-            builder: (BuildContext context, ScrollController scrollController) {
-              return NotificationListener(
-                onNotification: (scrollNotification) {
-                  if (scrollNotification is ScrollStartNotification) {
-                    _scrollUpLineIsTouching = true;
-                    setState(() {});
-                  } else if (scrollNotification is ScrollEndNotification) {
-                    _scrollUpLineIsTouching = false;
-                    setState(() {});
-                  }
-                  return true;
-                },
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: Container(
-                      height: MediaQuery.of(context).size.height / 2,
-                      decoration: BoxDecoration(
-                        color: GetColor.getSurfaceContainer(Theme.of(context)),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(50),
-                          topRight: Radius.circular(50),
+      floatingActionButton: Container(
+        height: 70 + _fabTween.value * MediaQuery.of(context).size.height / 2,
+        width: 70 + _fabTween.value * MediaQuery.of(context).size.width / 2,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20 + 10 * _fabTween.value),
+          color: Theme.of(context).colorScheme.secondaryContainer,
+        ),
+        child: Stack(
+          children: [
+            Center(
+              child: Opacity(
+                opacity: 1 - _fabTween.value,
+                child: Visibility(
+                  visible: _fabTween.value != 1,
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20 + 30 * _fabTween.value),
                         ),
+                        elevation: 0,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent.withOpacity(0.1),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.1,
-                              child: Column(
-                                children: [
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: SizedBox(
-                                      width: 60,
-                                      height: 10,
-                                      child: InkWell(
-                                        onTapDown: (_) {
-                                          _scrollUpLineIsTouching = true;
-                                          setState(() {});
-                                        },
-                                        onTapUp: (_) {
-                                          _scrollUpLineIsTouching = false;
-                                          setState(() {});
-                                        },
-                                        child: Align(
-                                          alignment: Alignment.center,
-                                          child: AnimatedContainer(
-                                            duration: const Duration(
-                                                milliseconds: 200),
-                                            width: 50 +
-                                                (10 *
-                                                    (_scrollUpLineIsTouching
-                                                        ? 1
-                                                        : 0)),
-                                            height: 8 +
-                                                (2 *
-                                                    (_scrollUpLineIsTouching
-                                                        ? 1
-                                                        : 0)),
-                                            decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .outlineVariant,
-                                                borderRadius:
-                                                    BorderRadius.circular(40)),
+                      onPressed: () {
+                        if (_fabAnimation.status != AnimationStatus.completed) {
+                          _fabAnimation.forward();
+                        }
+                      },
+                      child: Icon(
+                        Icons.menu,
+                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Opacity(
+                opacity: _fabTween.value,
+                child: Visibility(
+                    visible: _fabTween.value == 1,
+                    child: DefaultTextStyle(
+                      style: const TextStyle(fontSize: 18, color: Colors.black),
+                      child: PageView(
+                        controller: _fabPageController,
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          Column(
+                            children: [
+                              const Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text("資料來源："),
+                              ),
+                              Expanded(
+                                child: ListView(
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        _sourceType = 0;
+                                        _fabPageController.animateToPage(1,
+                                            duration: const Duration(milliseconds: 200), curve: Curves.linear);
+                                        setState(() {});
+                                      },
+                                      child: Card(
+                                        color: Theme.of(context).colorScheme.surface,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                "assets/roc_cwa.png",
+                                                width: 25,
+                                              ),
+                                              const Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                                child: Text(("中央氣象署CWA")),
+                                              ),
+                                              Spacer(),
+                                              const Icon(
+                                                Icons.arrow_forward_ios_outlined,
+                                                color: Colors.grey,
+                                                size: 13,
+                                              )
+                                            ],
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  Theme(
-                                    data: Theme.of(context).copyWith(
-                                      splashColor: Colors.transparent,
-                                    ),
-                                    child: BottomNavigationBar(
-                                      backgroundColor: Colors.transparent,
-                                      onTap: (v) {
-                                        setState(() {
-                                          _sourceType = v;
-                                        });
-                                      },
-                                      elevation: 0,
-                                      currentIndex: _sourceType,
-                                      items: [
-                                        BottomNavigationBarItem(
-                                          icon: SvgPicture.asset(
-                                            "assets/roc_cwa.svg",
-                                            colorFilter: ColorFilter.mode(
-                                                _sourceType == 0
-                                                    ? Theme.of(context)
-                                                        .colorScheme
-                                                        .primary
-                                                    : Theme.of(context)
-                                                        .colorScheme
-                                                        .outline,
-                                                BlendMode.srcIn),
-                                            width: 30,
-                                          ),
-                                          label: "中央氣象署",
-                                        ),
-                                        const BottomNavigationBarItem(
-                                          icon: Icon(Icons.cloud),
-                                          label: "CBC",
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              child: Row(
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Row(
                                 children: [
-                                  const Expanded(
-                                    child: Text(
-                                      "地點：",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18),
-                                    ),
-                                  ),
-                                  FilledButton(
+                                  IconButton(
+                                      onPressed: () {
+                                        _fabPageController.animateToPage(0,
+                                            duration: const Duration(milliseconds: 200), curve: Curves.linear);
+                                      },
+                                      icon: Icon(Icons.arrow_back_ios_new)),
+                                  const Spacer(),
+                                  ElevatedButton(
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (BuildContext context) {
-                                            return AddPlace(
-                                              placeType: _sourceType,
-                                            );
-                                          },
-                                        ),
-                                      );
+                                      context.pushNamed("/ap", queryParameters: {"Type": _sourceType.toString()});
                                     },
-                                    child: const Row(
-                                      children: [Icon(Icons.add), Text("新增地點")],
-                                    ),
+                                    child: Text("新增地點"),
                                   )
                                 ],
                               ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: NotificationListener(
-                                  onNotification: (n) {
-                                    return true;
+                              Expanded(
+                                child: ValueListenableBuilder(
+                                  valueListenable: Hive.box("Places").listenable(),
+                                  builder: (BuildContext context, Box<dynamic> value, Widget? child) {
+                                    var allPlace = value.values
+                                        .toList()
+                                        .where((element) => element["SourceType"] == _sourceType)
+                                        .toList();
+                                    return ListView.builder(
+                                      itemCount: allPlace.length,
+                                      itemBuilder: (BuildContext context, int index) {
+                                        return InkWell(
+                                          onTap: () {
+                                            _placeInfo = {
+                                              "SourceType": allPlace[index]["SourceType"],
+                                              "StationID": allPlace[index]["StationID"]
+                                            };
+                                            setState(() {});
+                                          },
+                                          child: Card(
+                                            color: Theme.of(context).colorScheme.surface,
+                                            child: ListTile(
+                                              title: Text(allPlace[index]["LocationName"].toString()),
+                                              subtitle: Text(allPlace[index]["StationName"].toString()),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
                                   },
-                                  child: ListView.builder(
-                                    padding: const EdgeInsets.all(0),
-                                    itemCount: 100,
-                                    itemBuilder:
-                                        (BuildContext context, int index) {
-                                      return const Text("ss");
-                                    },
-                                  ),
                                 ),
-                              ),
-                            )
+                              )
+                            ],
+                          )
+                        ],
+                      ),
+                    )),
+              ),
+            )
+          ],
+        ),
+      ),
+      body: Stack(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: Image.asset(
+              "assets/day_light.png",
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: Platform.isMacOS || Platform.isWindows || Platform.isLinux ? 20 : 10),
+            child: Builder(
+              builder: (BuildContext context) {
+                var box = Hive.box("RecentWeather");
+                var tisWeatherInfo = box.get(_placeInfo["StationID"]);
+                if (tisWeatherInfo != null) {
+                  if (_placeInfo["SourceType"] == 0) {
+                    return SafeArea(
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(tisWeatherInfo["locationName"]),
                           ],
                         ),
-                      )),
-                ),
-              );
-            },
-          )
+                      ),
+                    );
+                  }
+                }
+                return Text("無資料");
+              },
+            ),
+          ),
+          Container(
+            color: Colors.black.withOpacity(0.1),
+            width: double.infinity,
+            height: double.infinity,
+          ),
+          if (_fabTween.value != 0)
+            GestureDetector(
+              onTap: () {
+                _fabAnimation.reverse();
+              },
+              child: Container(
+                color: Colors.black.withOpacity(_fabTween.value * 0.5),
+              ),
+            )
         ],
       ),
     );
