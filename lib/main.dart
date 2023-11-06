@@ -1,16 +1,18 @@
 import 'dart:io';
 
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:weather_partner/Screens/AddPlce.dart';
-import 'package:weather_partner/Screens/HomeScreen.dart';
 import 'package:window_size/window_size.dart';
+
+import 'Screens/AddPlce.dart';
+import 'Screens/HomeScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+  if (kIsWeb || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('天氣夥伴 Weather Partner');
     setWindowMinSize(const Size(400, 300));
     setWindowMaxSize(Size.infinite);

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -22,14 +23,27 @@ class _AddPlaceState extends State<AddPlace> {
   var _placeJson = [];
   var _searchResult = [];
   var _haveResult = true;
-  var _searchBarKey = GlobalKey();
+  final _searchBarKey = GlobalKey();
+  var _connectedSattus = 200;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _checkInternet();
     if (_placeType == 0) {
       _getJson();
+    }
+  }
+
+  void _checkInternet() async {
+    try {
+      final result = await InternetAddress.lookup('example.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        _connectedSattus = 200;
+      }
+    } on SocketException catch (_) {
+      // _connected = false;
     }
   }
 
@@ -73,9 +87,11 @@ class _AddPlaceState extends State<AddPlace> {
           child: Column(
             children: [
               Padding(
-                padding: Platform.isMacOS || Platform.isWindows || Platform.isLinux
-                    ? const EdgeInsets.only(top: 20, bottom: 10)
-                    : const EdgeInsets.symmetric(vertical: 10),
+                padding: kIsWeb
+                    ? const EdgeInsets.symmetric(vertical: 10)
+                    : Platform.isMacOS || Platform.isWindows || Platform.isLinux
+                        ? const EdgeInsets.only(top: 20, bottom: 10)
+                        : const EdgeInsets.symmetric(vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -90,72 +106,77 @@ class _AddPlaceState extends State<AddPlace> {
                         ),
                       ),
                     ),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 1.5,
-                      child: SearchBar(
-                        key: _searchBarKey,
-                        leading: IconButton(
-                          splashColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          onPressed: () {},
-                          icon: const Icon(Icons.search),
-                        ),
-                        hintText: "搜尋",
-                        onChanged: (keyword) {
-                          if (keyword.isEmpty) {
-                            _searchResult = [];
-                          } else {
-                            if (_placeType == 0) {
-                              keyword = keyword.replaceAll("台", "臺");
-                              keyword = keyword.replaceAll("鄉", "");
-                              keyword = keyword.replaceAll("鎮", "");
-                              keyword = keyword.replaceAll("市", "");
-                              keyword = keyword.replaceAll("區", "");
-                              keyword = keyword.replaceAll("縣", "");
-                              keyword = keyword.replaceAll(" ", "");
-                              _searchResult = _placeJson.where((element) {
-                                var parameter = element["parameter"];
-                                return element["locationName"].toString().contains(keyword) ||
-                                    parameter[0]["parameterValue"].toString().contains(keyword) ||
-                                    parameter[2]["parameterValue"].toString().contains(keyword);
-                              }).toList();
-                              var searchIndex = 0;
-                              if (_searchResult.isEmpty) {
-                                for (var i = keyword.length; i > 0; i--) {
-                                  var tisKeyword = keyword.substring(0, i);
-                                  _searchResult = _placeJson.where((element) {
-                                    var parameter = element["parameter"];
-                                    return element["locationName"].toString().contains(tisKeyword) ||
-                                        parameter[0]["parameterValue"].toString().contains(tisKeyword) ||
-                                        parameter[2]["parameterValue"].toString().contains(tisKeyword);
-                                  }).toList();
-                                  if (_searchResult.isNotEmpty) {
-                                    searchIndex = i;
-                                    break;
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width / 1.5,
+                        child: SearchBar(
+                          key: _searchBarKey,
+                          leading: IconButton(
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            onPressed: () {},
+                            icon: const Icon(Icons.search),
+                          ),
+                          hintText: "搜尋",
+                          onChanged: (keyword) {
+                            if (keyword.isEmpty) {
+                              _searchResult = [];
+                            } else {
+                              if (_placeType == 0) {
+                                keyword = keyword.replaceAll("台", "臺");
+                                keyword = keyword.replaceAll("鄉", "");
+                                keyword = keyword.replaceAll("鎮", "");
+                                keyword = keyword.replaceAll("市", "");
+                                keyword = keyword.replaceAll("區", "");
+                                keyword = keyword.replaceAll("縣", "");
+                                keyword = keyword.replaceAll(" ", "");
+                                _searchResult = _placeJson.where((element) {
+                                  var parameter = element["parameter"];
+                                  return element["locationName"].toString().contains(keyword) ||
+                                      parameter[0]["parameterValue"].toString().contains(keyword) ||
+                                      parameter[2]["parameterValue"].toString().contains(keyword);
+                                }).toList();
+                                var searchIndex = 0;
+                                if (_searchResult.isEmpty) {
+                                  for (var i = keyword.length; i > 0; i--) {
+                                    var tisKeyword = keyword.substring(0, i);
+                                    _searchResult = _placeJson.where((element) {
+                                      var parameter = element["parameter"];
+                                      return element["locationName"].toString().contains(tisKeyword) ||
+                                          parameter[0]["parameterValue"].toString().contains(tisKeyword) ||
+                                          parameter[2]["parameterValue"].toString().contains(tisKeyword);
+                                    }).toList();
+                                    if (_searchResult.isNotEmpty) {
+                                      searchIndex = i;
+                                      break;
+                                    }
+                                  }
+                                  var tmp = _searchResult;
+                                  if (_searchResult.isEmpty || searchIndex < keyword.length / 2 + 1) {
+                                    _searchResult = _placeJson.where((element) {
+                                      var parameter = element["parameter"];
+                                      return element["locationName"].toString().contains(keyword[keyword.length - 1]) ||
+                                          parameter[0]["parameterValue"]
+                                              .toString()
+                                              .contains(keyword[keyword.length - 1]) ||
+                                          parameter[2]["parameterValue"]
+                                              .toString()
+                                              .contains(keyword[keyword.length - 1]);
+                                    }).toList();
+                                  }
+                                  if (_searchResult.isEmpty) {
+                                    _searchResult = tmp;
                                   }
                                 }
-                                var tmp = _searchResult;
-                                if (_searchResult.isEmpty || searchIndex < keyword.length / 2 + 1) {
-                                  _searchResult = _placeJson.where((element) {
-                                    var parameter = element["parameter"];
-                                    return element["locationName"].toString().contains(keyword[keyword.length - 1]) ||
-                                        parameter[0]["parameterValue"]
-                                            .toString()
-                                            .contains(keyword[keyword.length - 1]) ||
-                                        parameter[2]["parameterValue"].toString().contains(keyword[keyword.length - 1]);
-                                  }).toList();
-                                }
-                                if (_searchResult.isEmpty) {
-                                  _searchResult = tmp;
-                                }
-                              }
 
-                              setState(() {});
+                                setState(() {});
+                              }
                             }
-                          }
-                          _haveResult = !(_searchResult.isEmpty && keyword.isNotEmpty);
-                          setState(() {});
-                        },
+                            _haveResult = !(_searchResult.isEmpty && keyword.isNotEmpty);
+                            setState(() {});
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -204,7 +225,7 @@ class _AddPlaceState extends State<AddPlace> {
                                 await box.add(storageMap);
                                 getWeather(tis["stationId"],
                                     "${parameter[0]["parameterValue"]} ${parameter[2]["parameterValue"]}");
-                                context.pop();
+                                context.pop(0);
                               }
                             },
                             child: Card(

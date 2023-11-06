@@ -64,4 +64,22 @@ class GetColor {
     CorePalette p = CorePalette.of(seedColor.value);
     return Color(p.neutral.get(darkMode ? 80 : 30));
   }
+
+  static Color getOnSecondaryDark(ThemeData data) {
+    var seedColor = data.colorScheme.secondary;
+    CorePalette p = CorePalette.of(seedColor.value);
+    return Color(p.neutral.get(20));
+  }
+
+  static Color getOnSecondaryContainerDark(ThemeData data) {
+    var seedColor = data.colorScheme.secondary;
+    CorePalette p = CorePalette.of(seedColor.value);
+    return Color(p.neutral.get(90));
+  }
+
+  static Color getSecondaryContainerDark(ThemeData data) {
+    var seedColor = data.colorScheme.secondary;
+    CorePalette p = CorePalette.of(seedColor.value);
+    return Color(p.neutral.get(30));
+  }
 }
