@@ -154,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 var tisWeatherInfo = box.get(_placeInfo["StationID"]);
                 if (tisWeatherInfo != null) {
                   if (int.parse(_placeInfo["SourceType"].toString()) == 0) {
-                    if (tisWeatherInfo["city"] != null) {
+                    if (tisWeatherInfo["city"] != null && _placeInfo["StationID"] != null) {
                       _isNight = Hive.box("RecentWeather").get(_placeInfo["StationID"]) != null
                           ? int.parse(Hive.box("RecentWeather")
                                       .get(_placeInfo["StationID"])["obsTime"]
@@ -169,6 +169,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       .split(":")[0]) <=
                                   6
                           : false;
+                      var uvi = double.parse(tisWeatherInfo["H_UVI"]).round();
+                      var uviString = "";
+                      var uviColor = Colors.white;
+                      if (uvi < 3) {
+                        uviString = "低量級";
+                        uviColor = const Color(0xff289500);
+                      } else if (uvi < 6) {
+                        uviString = "中量級";
+                        uviColor = const Color(0xffF7e400);
+                      } else if (uvi < 8) {
+                        uviString = "高量級";
+                        uviColor = const Color(0xffF85900);
+                      } else if (uvi < 11) {
+                        uviString = "過量級";
+                        uviColor = const Color(0xffd8001d);
+                      } else {
+                        uviString = "危險級";
+                        uviColor = const Color(0xff6B49C8);
+                      }
                       return SafeArea(
                         child: SizedBox(
                           width: double.infinity,
@@ -307,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                             Column(
                                               crossAxisAlignment: CrossAxisAlignment.center,
                                               children: [
-                                                Icon(
+                                                const Icon(
                                                   Symbols.air,
                                                   color: Colors.white,
                                                   size: 25,
@@ -319,7 +338,96 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                           ? tisWeatherInfo["H_XD"]
                                                           : tisWeatherInfo["WDIR"]) /
                                                       360,
-                                                  child: Icon(
+                                                  child: const Icon(
+                                                    Symbols.navigation,
+                                                    color: Colors.white,
+                                                    size: 25,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "${tisWeatherInfo["WDIR"].toString() == "990" ? tisWeatherInfo["H_XD"] : tisWeatherInfo["WDIR"]}˚",
+                                                  style: const TextStyle(
+                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                                ),
+                                                Text(
+                                                  "${tisWeatherInfo["WDSD"]}m/s",
+                                                  // "${tisWeatherInfo["WDSD"]}ᵐ/ₛ",
+                                                  style: const TextStyle(
+                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          if ("${tisWeatherInfo["H_UVI"]}" != "-99")
+                                            _block(
+                                              Align(
+                                                alignment: Alignment.center,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  children: [
+                                                    Spacer(),
+                                                    Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Container(
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.white.withOpacity(0.4),
+                                                            borderRadius: BorderRadius.circular(360),
+                                                          ),
+                                                          child: Padding(
+                                                            padding: const EdgeInsets.all(2.0),
+                                                            child: Icon(
+                                                              Symbols.sunny,
+                                                              color: uviColor,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const Text(
+                                                          " UV",
+                                                          style: TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                    Text(
+                                                      "${tisWeatherInfo["H_UVI"]}",
+                                                      style: const TextStyle(
+                                                        fontSize: 20,
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      uviString,
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    Spacer()
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          _block(
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Symbols.air,
+                                                  color: Colors.white,
+                                                  size: 25,
+                                                ),
+                                                Transform.rotate(
+                                                  angle: 2 *
+                                                      pi *
+                                                      double.parse(tisWeatherInfo["WDIR"].toString() == "990"
+                                                          ? tisWeatherInfo["H_XD"]
+                                                          : tisWeatherInfo["WDIR"]) /
+                                                      360,
+                                                  child: const Icon(
                                                     Symbols.navigation,
                                                     color: Colors.white,
                                                     size: 25,
@@ -353,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   }
                 }
                 // }
-                return Text("無資料");
+                return const Text("無資料");
               },
             ),
           ),
@@ -613,8 +721,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: DefaultTextStyle(
           style: const TextStyle(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 50),
-            child: child,
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+            child: SizedBox(
+              width: 70,
+              height: 100,
+              child: child,
+            ),
           ),
         ),
       ),
