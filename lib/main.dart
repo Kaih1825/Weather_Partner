@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:window_size/window_size.dart';
@@ -31,13 +32,19 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
-  static final _defaultLightColorScheme = ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light);
-  static final _defaultDarkColorScheme = ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
+  static final _defaultLightColorScheme = ColorScheme.fromSeed(
+      seedColor: Colors.blue, brightness: Brightness.light);
+  static final _defaultDarkColorScheme =
+      ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+    ));
   }
 
   @override
@@ -48,9 +55,13 @@ class _MainState extends State<Main> {
           visible: true,
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(useMaterial3: true, colorScheme: lightDynamic ?? _defaultLightColorScheme),
+            theme: ThemeData(
+                useMaterial3: true,
+                colorScheme: lightDynamic ?? _defaultLightColorScheme),
             darkTheme: ThemeData(
-                useMaterial3: true, brightness: Brightness.dark, colorScheme: darkDynamic ?? _defaultDarkColorScheme),
+                useMaterial3: true,
+                brightness: Brightness.dark,
+                colorScheme: darkDynamic ?? _defaultDarkColorScheme),
             routerConfig: GoRouter(
               routes: [
                 GoRoute(
@@ -63,7 +74,9 @@ class _MainState extends State<Main> {
                     name: "/ap",
                     path: "/AddPlace",
                     builder: (context, state) {
-                      return AddPlace(placeType: int.parse(state.uri.queryParameters["Type"].toString()));
+                      return AddPlace(
+                          placeType: int.parse(
+                              state.uri.queryParameters["Type"].toString()));
                     })
               ],
             ),

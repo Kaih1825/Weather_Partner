@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GetColor.getSurface(Theme.of(context)),
+      extendBody: true,
       floatingActionButton: _fab(),
       body: Stack(
         children: [
