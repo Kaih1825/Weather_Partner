@@ -313,14 +313,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         child: Row(
                                           crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
-                                            Image.asset(
-                                              "assets/roc_cwa.png",
-                                              width: 25,
-                                            ),
+                                            const Text("🌤"),
                                             Padding(
                                               padding: EdgeInsets.symmetric(horizontal: 10),
                                               child: Text(
-                                                "中央氣象署CWA",
+                                                "Open Meteo",
                                                 style: TextStyle(
                                                     color: _isNight
                                                         ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
@@ -358,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ElevatedButton(
                                   onPressed: () async {
                                     var res = await context
-                                        .pushNamed("/ap", queryParameters: {"Type": _sourceType.toString()});
+                                        .pushNamed("/ap0", queryParameters: {"Type": _sourceType.toString()});
                                     if (res == 0) {
                                       _fabAnimation.reverse();
                                     }

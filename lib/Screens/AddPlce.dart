@@ -9,74 +9,33 @@ import 'package:http/http.dart' as http;
 import '../ApiKeys/ApiKeys.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
-class AddPlace extends StatefulWidget {
+class AddPlace0 extends StatefulWidget {
   final int placeType;
 
-  const AddPlace({super.key, required this.placeType});
+  const AddPlace0({super.key, required this.placeType});
 
   @override
-  State<AddPlace> createState() => _AddPlaceState();
+  State<AddPlace0> createState() => _AddPlace0State();
 }
 
-class _AddPlaceState extends State<AddPlace> {
-  get _placeType => widget.placeType;
-  var _placeJson = [];
-  var _searchResult = [];
-  var _haveResult = true;
-  final _searchBarKey = GlobalKey();
-  var _connectedSattus = 200;
+class _AddPlace0State extends State<AddPlace0> {
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _checkInternet();
-    if (_placeType == 0) {
-      _getJson();
-    }
   }
 
-  void _checkInternet() async {
-    try {
-      final result = await InternetAddress.lookup('example.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        _connectedSattus = 200;
-      }
-    } on SocketException catch (_) {
-      // _connected = false;
-    }
-  }
+  Future<void> _search(String keyword) async {
+    var request = http.Request('GET', Uri.parse('https://api.locationiq.com/v1/autocomplete?key=$LocationQ&q=$keyword&limit=5&dedupe=1&accept-language=zh'));
+    http.StreamedResponse response = await request.send();
 
-  void _getJson() async {
-    if (_placeType == 0) {
-      var response = await http.get(
-        Uri.https('opendata.cwa.gov.tw', 'api/v1/rest/datastore/O-A0003-001',
-            {"Authorization": cwaKeys, "elementName": "TIME"}),
-      );
-      print(response.body);
-      _placeJson = jsonDecode(response.body)["records"]["location"];
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
     }
-    setState(() {});
-  }
-
-  void getWeather(String stationID, String locationName) async {
-    var response = await http.get(
-      Uri.https('opendata.cwa.gov.tw', 'api/v1/rest/datastore/O-A0003-001',
-          {"Authorization": cwaKeys, "stationId": stationID}),
-    );
-    var location = jsonDecode(response.body)["records"]["location"][0];
-    var weatherElement = location["weatherElement"];
-    var weatherMap = {};
-    weatherMap["obsTime"] = location["time"]["obsTime"];
-    weatherMap["locationName"] = location["locationName"];
-    weatherMap["city"] = locationName.split(" ")[0];
-    weatherMap["district"] = locationName.split(" ")[1];
-    for (var tisElement in weatherElement) {
-      weatherMap[tisElement["elementName"]] = tisElement["elementValue"];
+    else {
+      print(response.reasonPhrase);
     }
-    var box = Hive.box("RecentWeather");
-    await box.put(stationID, weatherMap);
-    await box.put("PlaceInfo", {"SourceType": _placeType, "StationID": stationID});
   }
 
   @override
@@ -93,156 +52,55 @@ class _AddPlaceState extends State<AddPlace> {
                     : Platform.isMacOS || Platform.isWindows || Platform.isLinux
                         ? const EdgeInsets.only(top: 20, bottom: 10)
                         : const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        context.pop();
-                      },
-                      style: ElevatedButton.styleFrom(shape: const CircleBorder()),
-                      child: const Center(
-                        child: Icon(
-                          Icons.arrow_back_ios_sharp,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width / 1.5,
-                        child: SearchBar(
-                          key: _searchBarKey,
-                          leading: IconButton(
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onPressed: () {},
-                            icon: const Icon(Icons.search),
-                          ),
-                          hintText: "搜尋",
-                          onChanged: (keyword) {
-                            if (keyword.isEmpty) {
-                              _searchResult = [];
-                            } else {
-                              if (_placeType == 0) {
-                                keyword = keyword.replaceAll("台", "臺");
-                                keyword = keyword.replaceAll("鄉", "");
-                                keyword = keyword.replaceAll("鎮", "");
-                                keyword = keyword.replaceAll("市", "");
-                                keyword = keyword.replaceAll("區", "");
-                                keyword = keyword.replaceAll("縣", "");
-                                keyword = keyword.replaceAll(" ", "");
-                                _searchResult = _placeJson.where((element) {
-                                  var parameter = element["parameter"];
-                                  return element["locationName"].toString().contains(keyword) ||
-                                      parameter[0]["parameterValue"].toString().contains(keyword) ||
-                                      parameter[2]["parameterValue"].toString().contains(keyword);
-                                }).toList();
-                                var searchIndex = 0;
-                                if (_searchResult.isEmpty) {
-                                  for (var i = keyword.length; i > 0; i--) {
-                                    var tisKeyword = keyword.substring(0, i);
-                                    _searchResult = _placeJson.where((element) {
-                                      var parameter = element["parameter"];
-                                      return element["locationName"].toString().contains(tisKeyword) ||
-                                          parameter[0]["parameterValue"].toString().contains(tisKeyword) ||
-                                          parameter[2]["parameterValue"].toString().contains(tisKeyword);
-                                    }).toList();
-                                    if (_searchResult.isNotEmpty) {
-                                      searchIndex = i;
-                                      break;
-                                    }
-                                  }
-                                  var tmp = _searchResult;
-                                  if (_searchResult.isEmpty || searchIndex < keyword.length / 2 + 1) {
-                                    _searchResult = _placeJson.where((element) {
-                                      var parameter = element["parameter"];
-                                      return element["locationName"].toString().contains(keyword[keyword.length - 1]) ||
-                                          parameter[0]["parameterValue"]
-                                              .toString()
-                                              .contains(keyword[keyword.length - 1]) ||
-                                          parameter[2]["parameterValue"]
-                                              .toString()
-                                              .contains(keyword[keyword.length - 1]);
-                                    }).toList();
-                                  }
-                                  if (_searchResult.isEmpty) {
-                                    _searchResult = tmp;
-                                  }
-                                }
-
-                                setState(() {});
-                              }
-                            }
-                            _haveResult = !(_searchResult.isEmpty && keyword.isNotEmpty);
-                            setState(() {});
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_placeType == 0)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("資料來自於中央氣象署開放資料平台"),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.pop();
+                        },
+                        style: ElevatedButton.styleFrom(shape: const CircleBorder()),
+                        child: const Center(
+                          child: Icon(
+                            Icons.arrow_back_ios_sharp,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width / 1.5,
+                          child: SearchBar(
+                            key: const Key("SearchBar"),
+                            onSubmitted: (keyword) {
+                              _search(keyword);
+                            },
+                            leading: IconButton(
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onPressed: () {},
+                              icon: const Icon(Icons.search),
+                            ),
+                            hintText: "搜尋",
+                            onChanged: (keyword) {
+                            },
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              Expanded(
-                child: Stack(
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!_haveResult) const Center(child: Text("沒有結果")),
-                    if (_haveResult && _searchResult.isEmpty) const Center(child: Text("請輸入關鍵字搜尋")),
-                    ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 25),
-                      itemCount: _searchResult.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        var tis = _searchResult[index];
-                        var parameter = tis["parameter"];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: InkWell(
-                            onTap: () async {
-                              if (_placeType == 0) {
-                                var storageMap = {
-                                  "SourceType": 0,
-                                  "StationID": tis["stationId"],
-                                  "LocationName": "${parameter[0]["parameterValue"]} ${parameter[2]["parameterValue"]}",
-                                  "StationName": tis["locationName"],
-                                };
-                                var box = Hive.box("Places");
-                                var allPlace = box.values.toList();
-                                allPlace =
-                                    allPlace.where((element) => element["StationID"] == tis["stationId"]).toList();
-                                if (allPlace.isNotEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("此地點已被新增過")));
-                                  return;
-                                }
-                                await box.add(storageMap);
-                                getWeather(tis["stationId"],
-                                    "${parameter[0]["parameterValue"]} ${parameter[2]["parameterValue"]}");
-                                context.pop(0);
-                              }
-                            },
-                            child: Card(
-                              color: GetColor.getSurfaceDim(Theme.of(context)),
-                              child: ListTile(
-                                title: Text("${parameter[0]["parameterValue"]} ${parameter[2]["parameterValue"]}"),
-                                subtitle: Text(tis["locationName"]),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                    Text("位置資料來自:LocationlQ"),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ));

@@ -71,10 +71,10 @@ class _MainState extends State<Main> {
                   },
                 ),
                 GoRoute(
-                    name: "/ap",
-                    path: "/AddPlace",
+                    name: "/ap0",
+                    path: "/AddPlace0",
                     builder: (context, state) {
-                      return AddPlace(
+                      return AddPlace0(
                           placeType: int.parse(
                               state.uri.queryParameters["Type"].toString()));
                     })
