@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
-import 'package:weather_partner/ApiKeys/ApiKeys.dart';
+import '../ApiKeys/ApiKeys.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
 class AddPlace extends StatefulWidget {
@@ -53,6 +53,7 @@ class _AddPlaceState extends State<AddPlace> {
         Uri.https('opendata.cwa.gov.tw', 'api/v1/rest/datastore/O-A0003-001',
             {"Authorization": cwaKeys, "elementName": "TIME"}),
       );
+      print(response.body);
       _placeJson = jsonDecode(response.body)["records"]["location"];
     }
     setState(() {});

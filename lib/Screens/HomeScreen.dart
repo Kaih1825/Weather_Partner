@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:weather_partner/Screens/CWAInfo.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
 import '../ApiKeys/ApiKeys.dart';
@@ -157,303 +158,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     if (tisWeatherInfo["city"] != null && _placeInfo["StationID"] != null) {
                       _isNight = Hive.box("RecentWeather").get(_placeInfo["StationID"]) != null
                           ? int.parse(Hive.box("RecentWeather")
-                                      .get(_placeInfo["StationID"])["obsTime"]
-                                      .toString()
-                                      .split(" ")[1]
-                                      .split(":")[0]) >=
-                                  18 ||
-                              int.parse(Hive.box("RecentWeather")
-                                      .get(_placeInfo["StationID"])["obsTime"]
-                                      .toString()
-                                      .split(" ")[1]
-                                      .split(":")[0]) <=
-                                  6
+                          .get(_placeInfo["StationID"])["obsTime"]
+                          .toString()
+                          .split(" ")[1]
+                          .split(":")[0]) >=
+                          18 ||
+                          int.parse(Hive.box("RecentWeather")
+                              .get(_placeInfo["StationID"])["obsTime"]
+                              .toString()
+                              .split(" ")[1]
+                              .split(":")[0]) <=
+                              6
                           : false;
-                      var uvi = double.parse(tisWeatherInfo["H_UVI"]).round();
-                      var uviString = "";
-                      var uviColor = Colors.white;
-                      if (uvi < 3) {
-                        uviString = "低量級";
-                        uviColor = const Color(0xff289500);
-                      } else if (uvi < 6) {
-                        uviString = "中量級";
-                        uviColor = const Color(0xffF7e400);
-                      } else if (uvi < 8) {
-                        uviString = "高量級";
-                        uviColor = const Color(0xffF85900);
-                      } else if (uvi < 11) {
-                        uviString = "過量級";
-                        uviColor = const Color(0xffd8001d);
-                      } else {
-                        uviString = "危險級";
-                        uviColor = const Color(0xff6B49C8);
-                      }
-                      return SafeArea(
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: double.infinity,
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 30),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 50),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            "${tisWeatherInfo["city"]} ${tisWeatherInfo["district"]}",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 20,
-                                            ),
-                                            strutStyle: const StrutStyle(
-                                              forceStrutHeight: true,
-                                              leading: 0.5,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 10),
-                                            child: Text(
-                                              "${tisWeatherInfo["locationName"]}",
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 15,
-                                              ),
-                                              strutStyle: const StrutStyle(
-                                                forceStrutHeight: true,
-                                                leading: 0.5,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: _isNight ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: DefaultTextStyle(
-                                      style: const TextStyle(fontSize: 15),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            const Text(
-                                              "觀測時間",
-                                              style: TextStyle(color: Colors.white),
-                                            ),
-                                            const Spacer(),
-                                            Text(
-                                              tisWeatherInfo["obsTime"]
-                                                  .toString()
-                                                  .replaceAll("-", "/")
-                                                  .substring(0, tisWeatherInfo["obsTime"].toString().length - 3),
-                                              style: const TextStyle(color: Colors.white),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 5),
-                                              child: InkWell(
-                                                child: Transform.rotate(
-                                                  angle: _refreshTween.value,
-                                                  child: const Icon(
-                                                    Icons.refresh,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                                onTap: () {
-                                                  var box = Hive.box("RecentWeather");
-                                                  var info = box.get("PlaceInfo");
-                                                  _getWeatherInfo(
-                                                      info["StationID"].toString(), info["SourceType"].toString());
-                                                  _refreshAnimation.forward();
-                                                },
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 5),
-                                      child: Wrap(
-                                        alignment: WrapAlignment.spaceAround,
-                                        children: [
-                                          _block(
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                const Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      Symbols.device_thermostat,
-                                                      color: Colors.white,
-                                                    ),
-                                                    Icon(
-                                                      Symbols.humidity_mid,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ],
-                                                ),
-                                                Text(
-                                                  "${tisWeatherInfo["Weather"]}",
-                                                  style: const TextStyle(fontSize: 18, color: Colors.white),
-                                                ),
-                                                Text(
-                                                  "${tisWeatherInfo["TEMP"]}˚",
-                                                  style: const TextStyle(
-                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                ),
-                                                Text(
-                                                  "${(double.parse(tisWeatherInfo["HUMD"]) * 100).round()}%",
-                                                  style: const TextStyle(
-                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          _block(
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Symbols.air,
-                                                  color: Colors.white,
-                                                  size: 25,
-                                                ),
-                                                Transform.rotate(
-                                                  angle: 2 *
-                                                      pi *
-                                                      double.parse(tisWeatherInfo["WDIR"].toString() == "990"
-                                                          ? tisWeatherInfo["H_XD"]
-                                                          : tisWeatherInfo["WDIR"]) /
-                                                      360,
-                                                  child: const Icon(
-                                                    Symbols.navigation,
-                                                    color: Colors.white,
-                                                    size: 25,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  "${tisWeatherInfo["WDIR"].toString() == "990" ? tisWeatherInfo["H_XD"] : tisWeatherInfo["WDIR"]}˚",
-                                                  style: const TextStyle(
-                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                ),
-                                                Text(
-                                                  "${tisWeatherInfo["WDSD"]}m/s",
-                                                  // "${tisWeatherInfo["WDSD"]}ᵐ/ₛ",
-                                                  style: const TextStyle(
-                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          if ("${tisWeatherInfo["H_UVI"]}" != "-99")
-                                            _block(
-                                              Align(
-                                                alignment: Alignment.center,
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                                  children: [
-                                                    Spacer(),
-                                                    Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Container(
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.white.withOpacity(0.4),
-                                                            borderRadius: BorderRadius.circular(360),
-                                                          ),
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.all(2.0),
-                                                            child: Icon(
-                                                              Symbols.sunny,
-                                                              color: uviColor,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const Text(
-                                                          " UV",
-                                                          style: TextStyle(
-                                                            fontWeight: FontWeight.bold,
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    Text(
-                                                      "${tisWeatherInfo["H_UVI"]}",
-                                                      style: const TextStyle(
-                                                        fontSize: 20,
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      uviString,
-                                                      style: const TextStyle(
-                                                        fontSize: 15,
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                    Spacer()
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          _block(
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Symbols.air,
-                                                  color: Colors.white,
-                                                  size: 25,
-                                                ),
-                                                Transform.rotate(
-                                                  angle: 2 *
-                                                      pi *
-                                                      double.parse(tisWeatherInfo["WDIR"].toString() == "990"
-                                                          ? tisWeatherInfo["H_XD"]
-                                                          : tisWeatherInfo["WDIR"]) /
-                                                      360,
-                                                  child: const Icon(
-                                                    Symbols.navigation,
-                                                    color: Colors.white,
-                                                    size: 25,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  "${tisWeatherInfo["WDIR"].toString() == "990" ? tisWeatherInfo["H_XD"] : tisWeatherInfo["WDIR"]}˚",
-                                                  style: const TextStyle(
-                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                ),
-                                                Text(
-                                                  "${tisWeatherInfo["WDSD"]}m/s",
-                                                  // "${tisWeatherInfo["WDSD"]}ᵐ/ₛ",
-                                                  style: const TextStyle(
-                                                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                      return CWAInfo(
+                        tiWeatherInfo: tisWeatherInfo,
+                        isNight: _isNight,
+                        refreshWidget:  Padding(
+                          padding: const EdgeInsets.only(left: 5),
+                          child: InkWell(
+                            child: Transform.rotate(
+                              angle: _refreshTween.value,
+                              child: const Icon(
+                                Icons.refresh,
+                                color: Colors.white,
                               ),
                             ),
+                            onTap: () {
+                              var box = Hive.box("RecentWeather");
+                              var info = box.get("PlaceInfo");
+                              _getWeatherInfo(
+                                  info["StationID"].toString(), info["SourceType"].toString());
+                              _refreshAnimation.forward();
+                            },
                           ),
                         ),
                       );
@@ -710,26 +446,4 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _block(Widget child) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15, left: 6, right: 6),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _isNight ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: DefaultTextStyle(
-          style: const TextStyle(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-            child: SizedBox(
-              width: 70,
-              height: 100,
-              child: child,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
