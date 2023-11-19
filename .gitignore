@@ -9,8 +9,7 @@
 .history
 .svn/
 migrate_working_dir/
-/lib/ApiKeys/ApiKeys.dart
-/lib/ApiKeys/
+/lib/Utils/ApiKeys.dart
 
 # IntelliJ related
 *.iml
