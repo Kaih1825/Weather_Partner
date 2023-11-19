@@ -8,8 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
-import 'package:material_symbols_icons/symbols.dart';
-import 'package:weather_partner/Screens/CWAInfo.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 
 import '../ApiKeys/ApiKeys.dart';
@@ -24,11 +22,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   var _sourceType = 0;
   final _fabPageController = PageController();
-  late final _fabAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-  late final _fabTween =
-      Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _fabAnimation, curve: Curves.easeInOut));
-  late final _refreshAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
-  late final _refreshTween = Tween(begin: 0.0, end: 2 * pi * 90 / 360).animate(_refreshAnimation);
+  late final _fabAnimation = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 300));
+  late final _fabTween = Tween(begin: 0.0, end: 1.0)
+      .animate(CurvedAnimation(parent: _fabAnimation, curve: Curves.easeInOut));
+  late final _refreshAnimation = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 150));
+  late final _refreshTween =
+      Tween(begin: 0.0, end: 2 * pi * 90 / 360).animate(_refreshAnimation);
   var _placeInfo = {};
   var _isNight = false;
 
@@ -52,21 +53,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     recent.watch().listen((event) {
       try {
         if (event.value["StationID"] != null) {
-          _placeInfo = {"SourceType": event.value["SourceType"], "StationID": event.value["StationID"]};
-          _isNight = Hive.box("RecentWeather").get(_placeInfo["StationID"]) != null
-              ? int.parse(Hive.box("RecentWeather")
-                          .get(_placeInfo["StationID"])["obsTime"]
-                          .toString()
-                          .split(" ")[1]
-                          .split(":")[0]) >=
-                      18 ||
-                  int.parse(Hive.box("RecentWeather")
-                          .get(_placeInfo["StationID"])["obsTime"]
-                          .toString()
-                          .split(" ")[1]
-                          .split(":")[0]) <=
-                      6
-              : false;
+          _placeInfo = {
+            "SourceType": event.value["SourceType"],
+            "StationID": event.value["StationID"]
+          };
+          _isNight =
+              Hive.box("RecentWeather").get(_placeInfo["StationID"]) != null
+                  ? int.parse(Hive.box("RecentWeather")
+                              .get(_placeInfo["StationID"])["obsTime"]
+                              .toString()
+                              .split(" ")[1]
+                              .split(":")[0]) >=
+                          18 ||
+                      int.parse(Hive.box("RecentWeather")
+                              .get(_placeInfo["StationID"])["obsTime"]
+                              .toString()
+                              .split(" ")[1]
+                              .split(":")[0]) <=
+                          6
+                  : false;
           setState(() {});
         }
       } catch (ex) {}
@@ -86,13 +91,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 6
         : false;
     if (_placeInfo.isNotEmpty) {
-      _getWeatherInfo(_placeInfo["StationID"], _placeInfo["SourceType"].toString());
+      _getWeatherInfo(
+          _placeInfo["StationID"], _placeInfo["SourceType"].toString());
     }
     Timer.periodic(const Duration(minutes: 15), (timer) {
       print("Time");
       if (_placeInfo.isNotEmpty) {
         print("Update");
-        _getWeatherInfo(_placeInfo["StationID"].toString(), _placeInfo["SourceType"].toString());
+        _getWeatherInfo(_placeInfo["StationID"].toString(),
+            _placeInfo["SourceType"].toString());
       }
     });
     setState(() {});
@@ -116,7 +123,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
       var box = Hive.box("RecentWeather");
       await box.put(stationID, weatherMap);
-      await box.put("PlaceInfo", {"SourceType": placeType, "StationID": stationID});
+      await box
+          .put("PlaceInfo", {"SourceType": placeType, "StationID": stationID});
     } catch (ex) {
       print(ex);
     }
@@ -155,44 +163,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 var tisWeatherInfo = box.get(_placeInfo["StationID"]);
                 if (tisWeatherInfo != null) {
                   if (int.parse(_placeInfo["SourceType"].toString()) == 0) {
-                    if (tisWeatherInfo["city"] != null && _placeInfo["StationID"] != null) {
-                      _isNight = Hive.box("RecentWeather").get(_placeInfo["StationID"]) != null
+                    if (tisWeatherInfo["city"] != null &&
+                        _placeInfo["StationID"] != null) {
+                      _isNight = Hive.box("RecentWeather")
+                                  .get(_placeInfo["StationID"]) !=
+                              null
                           ? int.parse(Hive.box("RecentWeather")
-                          .get(_placeInfo["StationID"])["obsTime"]
-                          .toString()
-                          .split(" ")[1]
-                          .split(":")[0]) >=
-                          18 ||
-                          int.parse(Hive.box("RecentWeather")
-                              .get(_placeInfo["StationID"])["obsTime"]
-                              .toString()
-                              .split(" ")[1]
-                              .split(":")[0]) <=
-                              6
+                                      .get(_placeInfo["StationID"])["obsTime"]
+                                      .toString()
+                                      .split(" ")[1]
+                                      .split(":")[0]) >=
+                                  18 ||
+                              int.parse(Hive.box("RecentWeather")
+                                      .get(_placeInfo["StationID"])["obsTime"]
+                                      .toString()
+                                      .split(" ")[1]
+                                      .split(":")[0]) <=
+                                  6
                           : false;
-                      return CWAInfo(
-                        tiWeatherInfo: tisWeatherInfo,
-                        isNight: _isNight,
-                        refreshWidget:  Padding(
-                          padding: const EdgeInsets.only(left: 5),
-                          child: InkWell(
-                            child: Transform.rotate(
-                              angle: _refreshTween.value,
-                              child: const Icon(
-                                Icons.refresh,
-                                color: Colors.white,
-                              ),
-                            ),
-                            onTap: () {
-                              var box = Hive.box("RecentWeather");
-                              var info = box.get("PlaceInfo");
-                              _getWeatherInfo(
-                                  info["StationID"].toString(), info["SourceType"].toString());
-                              _refreshAnimation.forward();
-                            },
-                          ),
-                        ),
-                      );
+                      return Text("0000");
                     }
                   }
                 }
@@ -245,7 +234,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20 + 30 * _fabTween.value),
+                        borderRadius:
+                            BorderRadius.circular(20 + 30 * _fabTween.value),
                       ),
                       elevation: 0,
                       backgroundColor: Colors.transparent,
@@ -259,7 +249,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     child: Icon(
                       Icons.menu,
                       color: _isNight
-                          ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
+                          ? GetColor.getOnSecondaryContainerDark(
+                              Theme.of(context))
                           : Theme.of(context).colorScheme.onSecondaryContainer,
                     ),
                   ),
@@ -276,7 +267,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: DefaultTextStyle(
                     style: TextStyle(
                         fontSize: 18,
-                        color: _isNight ? GetColor.getOnSecondaryContainerDark(Theme.of(context)) : Colors.black),
+                        color: _isNight
+                            ? GetColor.getOnSecondaryContainerDark(
+                                Theme.of(context))
+                            : Colors.black),
                     child: PageView(
                       controller: _fabPageController,
                       scrollDirection: Axis.horizontal,
@@ -290,8 +284,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 "資料來源：",
                                 style: TextStyle(
                                     color: _isNight
-                                        ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
-                                        : Theme.of(context).colorScheme.onSurface),
+                                        ? GetColor.getOnSecondaryContainerDark(
+                                            Theme.of(context))
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface),
                               ),
                             ),
                             Expanded(
@@ -301,27 +298,44 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                     onTap: () {
                                       _sourceType = 0;
                                       _fabPageController.animateToPage(1,
-                                          duration: const Duration(milliseconds: 200), curve: Curves.linear);
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          curve: Curves.linear);
                                       setState(() {});
                                     },
                                     child: Card(
                                       color: _isNight
-                                          ? GetColor.getSecondaryContainerDark(Theme.of(context))
-                                          : Theme.of(context).colorScheme.surface,
+                                          ? GetColor.getSecondaryContainerDark(
+                                              Theme.of(context))
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .surface,
                                       child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10, horizontal: 5),
                                         child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           children: [
-                                            const Text("🌤"),
+                                            const Padding(
+                                              padding:
+                                                  EdgeInsets.only(left: 10),
+                                              child: Text("🌤"),
+                                            ),
                                             Padding(
-                                              padding: EdgeInsets.symmetric(horizontal: 10),
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 10),
                                               child: Text(
                                                 "Open Meteo",
                                                 style: TextStyle(
                                                     color: _isNight
-                                                        ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
-                                                        : Theme.of(context).colorScheme.onSurface),
+                                                        ? GetColor
+                                                            .getOnSecondaryContainerDark(
+                                                                Theme.of(
+                                                                    context))
+                                                        : Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurface),
                                               ),
                                             ),
                                             Spacer(),
@@ -347,15 +361,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 IconButton(
                                   onPressed: () {
                                     _fabPageController.animateToPage(0,
-                                        duration: const Duration(milliseconds: 200), curve: Curves.linear);
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        curve: Curves.linear);
                                   },
-                                  icon: Icon(Icons.arrow_back_ios_new, color: Colors.grey),
+                                  icon: Icon(Icons.arrow_back_ios_new,
+                                      color: Colors.grey),
                                 ),
                                 const Spacer(),
                                 ElevatedButton(
                                   onPressed: () async {
-                                    var res = await context
-                                        .pushNamed("/ap0", queryParameters: {"Type": _sourceType.toString()});
+                                    var res = await context.pushNamed("/ap0",
+                                        queryParameters: {
+                                          "Type": _sourceType.toString()
+                                        });
                                     if (res == 0) {
                                       _fabAnimation.reverse();
                                     }
@@ -366,21 +385,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                             Expanded(
                               child: ValueListenableBuilder(
-                                valueListenable: Hive.box("Places").listenable(),
-                                builder: (BuildContext context, Box<dynamic> value, Widget? child) {
+                                valueListenable:
+                                    Hive.box("Places").listenable(),
+                                builder: (BuildContext context,
+                                    Box<dynamic> value, Widget? child) {
                                   var allPlace = value.values
                                       .toList()
-                                      .where((element) => element["SourceType"] == _sourceType)
+                                      .where((element) =>
+                                          element["SourceType"] == _sourceType)
                                       .toList();
-                                  _isNight = Hive.box("RecentWeather").get(_placeInfo["StationID"]) != null
+                                  _isNight = Hive.box("RecentWeather")
+                                              .get(_placeInfo["StationID"]) !=
+                                          null
                                       ? int.parse(Hive.box("RecentWeather")
-                                                  .get(_placeInfo["StationID"])["obsTime"]
+                                                  .get(_placeInfo["StationID"])[
+                                                      "obsTime"]
                                                   .toString()
                                                   .split(" ")[1]
                                                   .split(":")[0]) >=
                                               18 ||
                                           int.parse(Hive.box("RecentWeather")
-                                                  .get(_placeInfo["StationID"])["obsTime"]
+                                                  .get(_placeInfo["StationID"])[
+                                                      "obsTime"]
                                                   .toString()
                                                   .split(" ")[1]
                                                   .split(":")[0]) <=
@@ -388,40 +414,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       : false;
                                   return ListView.builder(
                                     itemCount: allPlace.length,
-                                    itemBuilder: (BuildContext context, int index) {
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
                                       return InkWell(
                                         onTap: () async {
                                           var box = Hive.box("RecentWeather");
                                           await box.put("PlaceInfo", {
-                                            "SourceType": allPlace[index]["SourceType"],
-                                            "StationID": allPlace[index]["StationID"]
+                                            "SourceType": allPlace[index]
+                                                ["SourceType"],
+                                            "StationID": allPlace[index]
+                                                ["StationID"]
                                           });
                                           _placeInfo = {
-                                            "SourceType": allPlace[index]["SourceType"],
-                                            "StationID": allPlace[index]["StationID"]
+                                            "SourceType": allPlace[index]
+                                                ["SourceType"],
+                                            "StationID": allPlace[index]
+                                                ["StationID"]
                                           };
-                                          _getWeatherInfo(allPlace[index]["StationID"].toString(),
-                                              allPlace[index]["SourceType"].toString());
+                                          _getWeatherInfo(
+                                              allPlace[index]["StationID"]
+                                                  .toString(),
+                                              allPlace[index]["SourceType"]
+                                                  .toString());
                                           _fabAnimation.reverse();
                                         },
                                         child: Card(
                                           color: _isNight
-                                              ? GetColor.getSecondaryContainerDark(Theme.of(context))
-                                              : Theme.of(context).colorScheme.surface,
+                                              ? GetColor
+                                                  .getSecondaryContainerDark(
+                                                      Theme.of(context))
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .surface,
                                           child: ListTile(
                                             title: Text(
-                                              allPlace[index]["LocationName"].toString(),
+                                              allPlace[index]["LocationName"]
+                                                  .toString(),
                                               style: TextStyle(
                                                   color: _isNight
-                                                      ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
-                                                      : Theme.of(context).colorScheme.onSurface),
+                                                      ? GetColor
+                                                          .getOnSecondaryContainerDark(
+                                                              Theme.of(context))
+                                                      : Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface),
                                             ),
                                             subtitle: Text(
-                                              allPlace[index]["StationName"].toString(),
+                                              allPlace[index]["StationName"]
+                                                  .toString(),
                                               style: TextStyle(
                                                   color: _isNight
-                                                      ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
-                                                      : Theme.of(context).colorScheme.onSurface),
+                                                      ? GetColor
+                                                          .getOnSecondaryContainerDark(
+                                                              Theme.of(context))
+                                                      : Theme.of(context)
+                                                          .colorScheme
+                                                          .onSurface),
                                             ),
                                           ),
                                         ),
@@ -442,5 +490,4 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
 }

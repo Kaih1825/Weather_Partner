@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
-import '../ApiKeys/ApiKeys.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
+
+import '../ApiKeys/ApiKeys.dart';
 
 class AddPlace0 extends StatefulWidget {
   final int placeType;
@@ -19,6 +20,8 @@ class AddPlace0 extends StatefulWidget {
 }
 
 class _AddPlace0State extends State<AddPlace0> {
+  var _result = [];
+  var _coordinates = [];
 
   @override
   void initState() {
@@ -27,14 +30,37 @@ class _AddPlace0State extends State<AddPlace0> {
   }
 
   Future<void> _search(String keyword) async {
-    var request = http.Request('GET', Uri.parse('https://api.locationiq.com/v1/autocomplete?key=$LocationQ&q=$keyword&limit=5&dedupe=1&accept-language=zh'));
+    var request = http.Request(
+        'GET',
+        Uri.parse(
+            'https://api.maptiler.com/geocoding/$keyword.json?key=$maptiler'));
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
-      print(await response.stream.bytesToString());
-    }
-    else {
-      print(response.reasonPhrase);
+      _result = [];
+      _coordinates = [];
+      var result = jsonDecode(await response.stream.bytesToString());
+      var places = result["features"];
+      for (var place in places) {
+        var tisContext = [];
+        for (var context in place["context"]) {
+          if (context["kind"] == "admin_area" || context["kind"] == "place") {
+            tisContext.add(context["text"]);
+          }
+        }
+        tisContext = tisContext.reversed.toSet().toList();
+        if (place["properties"]["kind"] == "admin_area") {
+          tisContext.add(place["text"]);
+        }
+        if (tisContext.length > 1) {
+          _result.add(tisContext.toSet().toList());
+          _coordinates.add(place["center"]);
+        }
+        setState(() {});
+      }
+      print(_result);
+    } else {
+      print("Error:${response.reasonPhrase}");
     }
   }
 
@@ -53,7 +79,8 @@ class _AddPlace0State extends State<AddPlace0> {
                         ? const EdgeInsets.only(top: 20, bottom: 10)
                         : const EdgeInsets.symmetric(vertical: 10),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width / 10),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width / 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -61,7 +88,8 @@ class _AddPlace0State extends State<AddPlace0> {
                         onPressed: () {
                           context.pop();
                         },
-                        style: ElevatedButton.styleFrom(shape: const CircleBorder()),
+                        style: ElevatedButton.styleFrom(
+                            shape: const CircleBorder()),
                         child: const Center(
                           child: Icon(
                             Icons.arrow_back_ios_sharp,
@@ -73,7 +101,7 @@ class _AddPlace0State extends State<AddPlace0> {
                           width: MediaQuery.of(context).size.width / 1.5,
                           child: SearchBar(
                             key: const Key("SearchBar"),
-                            onSubmitted: (keyword) {
+                            onChanged: (keyword) {
                               _search(keyword);
                             },
                             leading: IconButton(
@@ -83,8 +111,6 @@ class _AddPlace0State extends State<AddPlace0> {
                               icon: const Icon(Icons.search),
                             ),
                             hintText: "搜尋",
-                            onChanged: (keyword) {
-                            },
                           ),
                         ),
                       ),
@@ -97,8 +123,65 @@ class _AddPlace0State extends State<AddPlace0> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("位置資料來自:LocationlQ"),
+                    Text("位置資料來自:maptiler"),
                   ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _result.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: InkWell(
+                        onTap: () async {
+                          var box = Hive.box("Places");
+                          var allPlace = box.values.toList();
+                          var storageMap = {
+                            "SourceType": 0,
+                            "StationID":
+                                "${_coordinates[index][0]},${_coordinates[index][1]}",
+                            "LocationName": _result[index]
+                                .toString()
+                                .replaceAll(",", " ")
+                                .replaceAll("[", "")
+                                .replaceAll("]", ""),
+                          };
+                          allPlace = allPlace
+                              .where((element) =>
+                                  element["StationID"] ==
+                                  "${_coordinates[index][0]},${_coordinates[index][1]}")
+                              .toList();
+                          if (allPlace.isNotEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("此地點已被新增過"),
+                              ),
+                            );
+                            return;
+                          }
+                          // await box.add(storageMap);
+
+                          context.pop(0);
+                        },
+                        child: Card(
+                          color: GetColor.getSurfaceDim(Theme.of(context)),
+                          child: ListTile(
+                            title: Text(
+                              _result[index]
+                                  .toString()
+                                  .replaceAll(",", " ")
+                                  .replaceAll("[", "")
+                                  .replaceAll("]", ""),
+                            ),
+                            subtitle: Text(
+                              "經度:${_coordinates[index][0].toStringAsFixed(2).toString()}\n緯度:${_coordinates[index][1].toStringAsFixed(2).toString()}",
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
