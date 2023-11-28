@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:weather_partner/Functions/WeatherInfo.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
+import 'package:weather_partner/Widgets/OpenMeteoWeatherInfo.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,16 +21,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final _fabPageController = PageController();
   late final _fabAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
   late final _fabTween = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _fabAnimation, curve: Curves.easeInOut));
-  late final _refreshAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
-  late final _refreshTween = Tween(begin: 0.0, end: 2 * pi * 90 / 360).animate(_refreshAnimation);
   var _placeInfo = {};
   var _isNight = false;
+  var _timer = Timer(const Duration(seconds: 1), () {});
 
   @override
   void dispose() {
     _fabAnimation.dispose();
-    _refreshAnimation.dispose();
     _fabPageController.dispose();
+    _timer.cancel();
     super.dispose();
   }
 
@@ -41,14 +40,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _fabAnimation.addListener(() {
       setState(() {});
     });
-    _refreshAnimation.addListener(() {
-      setState(() {});
-    });
-    _refreshAnimation.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _refreshAnimation.reverse();
-      }
-    });
 
     var recent = Hive.box("RecentWeather");
     getWeatherInInit();
@@ -57,24 +48,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       try {
         if (event.value["StationID"] != null) {
           _placeInfo = {"SourceType": event.value["SourceType"], "StationID": event.value["StationID"], "LocationName": event.value["LocationName"]};
-          print(event.value);
-          if (event.value["SourceType"] == 0 && event.value["is_day"] != null) {
-            _isNight = event.value["is_day"] == 0 ? true : false;
+          if (event.value["SourceType"] == 0 && event.value["CurrentWeather"]["is_day"] != null) {
+            _isNight = event.value["CurrentWeather"]["is_day"] == 0 ? true : false;
           }
           setState(() {});
         }
       } catch (ex) {}
     });
 
-    Timer.periodic(const Duration(minutes: 1), (timer) async {
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
       if (_placeInfo.isNotEmpty) {
         if (_placeInfo["SourceType"] == 0) {
           var lonlat = _placeInfo["StationID"].toString().split(",");
           var weatherInfo = await getWeatherInfo(_placeInfo["LocationName"], lonlat[0], lonlat[1]);
           await recent.put(_placeInfo["StationID"], weatherInfo);
           _placeInfo = weatherInfo;
-          if (_placeInfo["is_day"] != null) {
-            _isNight = _placeInfo["is_day"] == 0 ? true : false;
+          if (_placeInfo["CurrentWeather"]["is_day"] != null) {
+            _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
           }
         }
         setState(() {});
@@ -95,8 +85,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         var weatherInfo = await getWeatherInfo(_placeInfo["LocationName"], lonlat[0], lonlat[1]);
         await recent.put(_placeInfo["StationID"], weatherInfo);
         _placeInfo = weatherInfo;
-        if (_placeInfo["is_day"] != null) {
-          _isNight = _placeInfo["is_day"] == 0 ? true : false;
+        if (_placeInfo["CurrentWeather"]["is_day"] != null) {
+          _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
         }
       }
     }
@@ -136,7 +126,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 if (tisWeatherInfo != null) {
                   _placeInfo = tisWeatherInfo;
                   if (tisWeatherInfo["SourceType"] == 0) {
-                    return Text("${tisWeatherInfo["LocationName"].toString()}\n${tisWeatherInfo["obsTime"].toString()}");
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                      child: OpenMeteoWeatherInfo(
+                        info: tisWeatherInfo,
+                        isNight: _isNight,
+                      ),
+                    );
                   }
                 }
                 return const Text("無資料");
@@ -250,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               child: Text("🌤"),
                                             ),
                                             Padding(
-                                              padding: EdgeInsets.symmetric(horizontal: 10),
+                                              padding: const EdgeInsets.symmetric(horizontal: 10),
                                               child: Text(
                                                 "Open Meteo",
                                                 style: TextStyle(
@@ -320,8 +316,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                           var weatherBox = Hive.box("RecentWeather");
                                           await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
                                           _placeInfo = weatherInfo;
-                                          if (_placeInfo["is_day"] != null) {
-                                            _isNight = _placeInfo["is_day"] == 0 ? true : false;
+                                          if (_placeInfo["CurrentWeather"]["is_day"] != null) {
+                                            _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
                                           }
                                           setState(() {});
                                         },

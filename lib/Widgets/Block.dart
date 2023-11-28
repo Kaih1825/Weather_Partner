@@ -15,7 +15,7 @@ class _BlockState extends State<Block> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 15, left: 6, right: 6),
+      padding: const EdgeInsets.only(top: 15, left: 5, right: 5),
       child: Container(
         decoration: BoxDecoration(
           color: _isNight ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
@@ -23,11 +23,11 @@ class _BlockState extends State<Block> {
         ),
         child: DefaultTextStyle(
           style: const TextStyle(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-            child: SizedBox(
-              width: 70,
-              height: 100,
+          child: SizedBox(
+            width: 180,
+            height: 100,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
               child: child,
             ),
           ),

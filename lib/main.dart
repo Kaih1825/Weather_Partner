@@ -15,7 +15,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('天氣夥伴 Weather Partner');
-    setWindowMinSize(const Size(400, 300));
+    setWindowMinSize(const Size(450, 300));
     setWindowMaxSize(Size.infinite);
   }
   await Hive.initFlutter();
@@ -32,18 +32,16 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
-  static final _defaultLightColorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.blue, brightness: Brightness.light);
-  static final _defaultDarkColorScheme =
-      ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
+  static final _defaultLightColorScheme = ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light);
+  static final _defaultDarkColorScheme = ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark);
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: Colors.transparent,
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
     ));
   }
 
@@ -55,13 +53,8 @@ class _MainState extends State<Main> {
           visible: true,
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-                useMaterial3: true,
-                colorScheme: lightDynamic ?? _defaultLightColorScheme),
-            darkTheme: ThemeData(
-                useMaterial3: true,
-                brightness: Brightness.dark,
-                colorScheme: darkDynamic ?? _defaultDarkColorScheme),
+            theme: ThemeData(useMaterial3: true, colorScheme: lightDynamic ?? _defaultLightColorScheme),
+            darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark, colorScheme: darkDynamic ?? _defaultDarkColorScheme),
             routerConfig: GoRouter(
               routes: [
                 GoRoute(
@@ -74,9 +67,7 @@ class _MainState extends State<Main> {
                     name: "/ap0",
                     path: "/AddPlace0",
                     builder: (context, state) {
-                      return AddPlace0(
-                          placeType: int.parse(
-                              state.uri.queryParameters["Type"].toString()));
+                      return AddPlace0(placeType: int.parse(state.uri.queryParameters["Type"].toString()));
                     })
               ],
             ),

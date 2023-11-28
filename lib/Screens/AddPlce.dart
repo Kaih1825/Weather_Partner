@@ -44,11 +44,13 @@ class _AddPlace0State extends State<AddPlace0> {
       var places = result["features"];
       for (var place in places) {
         var tisContext = [];
-        for (var context in place["context"]) {
-          if (context["kind"] == "admin_area" || context["kind"] == "place") {
-            tisContext.add(context["text"]);
+        try {
+          for (var context in place["context"]) {
+            if (context["kind"] == "admin_area" || context["kind"] == "place") {
+              tisContext.add(context["text"]);
+            }
           }
-        }
+        } catch (ex) {}
         tisContext = tisContext.reversed.toSet().toList();
         if (place["properties"]["kind"] == "admin_area") {
           tisContext.add(place["text"]);
@@ -156,7 +158,8 @@ class _AddPlace0State extends State<AddPlace0> {
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
                             onTap: () async {
-                              context.pop(0);
+                              _getting = 1;
+                              setState(() {});
                               var stationID = "${_coordinates[index][0].toString()},${_coordinates[index][1].toString()}";
                               var locationName = _result[index].toString().replaceAll(",", " ").replaceAll("[", "").replaceAll("]", "");
                               var box = Hive.box("Places");
@@ -186,6 +189,8 @@ class _AddPlace0State extends State<AddPlace0> {
                                 "StationID": stationID,
                                 "LocationName": locationName,
                               });
+                              _getting = 0;
+                              context.pop(0);
                             },
                             child: Card(
                               color: GetColor.getSurfaceDim(Theme.of(context)),
