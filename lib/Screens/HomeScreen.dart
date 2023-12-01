@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:http/http.dart' as http;
 import 'package:weather_partner/Functions/WeatherInfo.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 import 'package:weather_partner/Widgets/OpenMeteoWeatherInfo.dart';
@@ -19,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   var _sourceType = 0;
   final _fabPageController = PageController();
-  late final _fabAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+  late final _fabAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
   late final _fabTween = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _fabAnimation, curve: Curves.easeInOut));
   var _placeInfo = {};
   var _isNight = false;
@@ -70,8 +72,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         setState(() {});
       }
     });
+
+    handleNoPlaces();
     setState(() {});
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       setState(() {});
     });
   }
@@ -83,12 +87,59 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (_placeInfo["SourceType"] == 0) {
         var lonlat = _placeInfo["StationID"].toString().split(",");
         var weatherInfo = await getWeatherInfo(_placeInfo["LocationName"], lonlat[0], lonlat[1]);
-        await recent.put(_placeInfo["StationID"], weatherInfo);
-        _placeInfo = weatherInfo;
-        if (_placeInfo["CurrentWeather"]["is_day"] != null) {
-          _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
+        if (weatherInfo["Error"] == null) {
+          await recent.put(_placeInfo["StationID"], weatherInfo);
+          _placeInfo = weatherInfo;
+          if (_placeInfo["CurrentWeather"]["is_day"] != null) {
+            _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
+          }
         }
       }
+    }
+  }
+
+  void handleNoPlaces() async {
+    var request = http.Request('GET', Uri.parse('http://ip-api.com/json/'));
+
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      var result = jsonDecode(await response.stream.bytesToString());
+      var stationID = "${result["lon"]},${result["lat"]}";
+      var locationName = "IP所在地 ${result["city"]}";
+      var box = Hive.box("Places");
+      var storageMap = {
+        "SourceType": 0,
+        "StationID": stationID,
+        "LocationName": locationName,
+      };
+      if (box.isEmpty) {
+        await box.add(storageMap);
+      } else {
+        var key = box.keys
+            .map((e) {
+              var tisElement = box.get(e);
+              return {
+                "Key": e,
+                "StationID": tisElement["StationID"],
+              };
+            })
+            .toList()
+            .where((element) => element["StationID"] == stationID)
+            .toList();
+        await box.put(key[0]["Key"], storageMap);
+      }
+
+      var weatherInfo = await getWeatherInfo(locationName, result["lon"].toString(), result["lat"].toString());
+      var weatherBox = Hive.box("RecentWeather");
+      await weatherBox.put(stationID, weatherInfo);
+      await weatherBox.put("PlaceInfo", {
+        "SourceType": 0,
+        "StationID": stationID,
+        "LocationName": locationName,
+      });
+      _placeInfo = weatherInfo;
+    } else {
+      print(response.reasonPhrase);
     }
   }
 
@@ -126,16 +177,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 if (tisWeatherInfo != null) {
                   _placeInfo = tisWeatherInfo;
                   if (tisWeatherInfo["SourceType"] == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                      child: OpenMeteoWeatherInfo(
-                        info: tisWeatherInfo,
-                        isNight: _isNight,
+                    return SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        child: OpenMeteoWeatherInfo(
+                          info: tisWeatherInfo,
+                          isNight: _isNight,
+                        ),
                       ),
                     );
                   }
                 }
-                return const Text("無資料");
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
               },
             ),
           ),
@@ -231,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   InkWell(
                                     onTap: () {
                                       _sourceType = 0;
-                                      _fabPageController.animateToPage(1, duration: const Duration(milliseconds: 200), curve: Curves.linear);
+                                      _fabPageController.animateToPage(1, duration: const Duration(milliseconds: 200), curve: Curves.linearToEaseOut);
                                       setState(() {});
                                     },
                                     child: Card(
@@ -277,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               children: [
                                 IconButton(
                                   onPressed: () {
-                                    _fabPageController.animateToPage(0, duration: const Duration(milliseconds: 200), curve: Curves.linear);
+                                    _fabPageController.animateToPage(0, duration: const Duration(milliseconds: 200), curve: Curves.linearToEaseOut);
                                   },
                                   icon: Icon(Icons.arrow_back_ios_new, color: Colors.grey),
                                 ),
@@ -289,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       _fabAnimation.reverse();
                                     }
                                   },
-                                  child: Text("新增地點"),
+                                  child: const Text("新增地點"),
                                 )
                               ],
                             ),
@@ -301,44 +356,57 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   return ListView.builder(
                                     itemCount: allPlace.length,
                                     itemBuilder: (BuildContext context, int index) {
-                                      return InkWell(
-                                        onTap: () async {
-                                          var box = Hive.box("RecentWeather");
-                                          _placeInfo = {
-                                            "SourceType": allPlace[index]["SourceType"],
-                                            "StationID": allPlace[index]["StationID"],
-                                            "LocationName": allPlace[index]["LocationName"]
-                                          };
-                                          await box.put("PlaceInfo", _placeInfo);
-                                          var lonlat = allPlace[index]["StationID"].toString().split(",");
-                                          _fabAnimation.reverse();
-                                          var weatherInfo = await getWeatherInfo(allPlace[index]["LocationName"], lonlat[0], lonlat[1]);
-                                          var weatherBox = Hive.box("RecentWeather");
-                                          await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
-                                          _placeInfo = weatherInfo;
-                                          if (_placeInfo["CurrentWeather"]["is_day"] != null) {
-                                            _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
-                                          }
-                                          setState(() {});
+                                      return Dismissible(
+                                        key: Key(allPlace[index]["StationID"].toString()),
+                                        confirmDismiss: (direction) async {
+                                          return !allPlace[index]["LocationName"].toString().contains("IP所在地");
                                         },
-                                        child: Card(
-                                          color: _isNight
-                                              ? GetColor.getSecondaryContainerDark(Theme.of(context))
-                                              : Theme.of(context).colorScheme.surface,
-                                          child: ListTile(
-                                            title: Text(
-                                              allPlace[index]["LocationName"].toString(),
-                                              style: TextStyle(
-                                                  color: _isNight
-                                                      ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
-                                                      : Theme.of(context).colorScheme.onSurface),
-                                            ),
-                                            subtitle: Text(
-                                              allPlace[index]["StationID"].toString(),
-                                              style: TextStyle(
-                                                  color: _isNight
-                                                      ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
-                                                      : Theme.of(context).colorScheme.onSurface),
+                                        onDismissed: (direction) async {
+                                          var box = Hive.box("Places");
+                                          await box.deleteAt(box.values.toList().indexOf(allPlace[index]));
+                                          var recent = Hive.box("RecentWeather");
+                                          await recent.delete(allPlace[index]["StationID"]);
+                                          handleNoPlaces();
+                                        },
+                                        child: InkWell(
+                                          onTap: () async {
+                                            var box = Hive.box("RecentWeather");
+                                            _placeInfo = {
+                                              "SourceType": allPlace[index]["SourceType"],
+                                              "StationID": allPlace[index]["StationID"],
+                                              "LocationName": allPlace[index]["LocationName"]
+                                            };
+                                            await box.put("PlaceInfo", _placeInfo);
+                                            var lonlat = allPlace[index]["StationID"].toString().split(",");
+                                            _fabAnimation.reverse();
+                                            var weatherInfo = await getWeatherInfo(allPlace[index]["LocationName"], lonlat[0], lonlat[1]);
+                                            var weatherBox = Hive.box("RecentWeather");
+                                            await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
+                                            _placeInfo = weatherInfo;
+                                            if (_placeInfo["CurrentWeather"]["is_day"] != null) {
+                                              _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
+                                            }
+                                            setState(() {});
+                                          },
+                                          child: Card(
+                                            color: _isNight
+                                                ? GetColor.getSecondaryContainerDark(Theme.of(context))
+                                                : Theme.of(context).colorScheme.surface,
+                                            child: ListTile(
+                                              title: Text(
+                                                allPlace[index]["LocationName"].toString(),
+                                                style: TextStyle(
+                                                    color: _isNight
+                                                        ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
+                                                        : Theme.of(context).colorScheme.onSurface),
+                                              ),
+                                              subtitle: Text(
+                                                allPlace[index]["StationID"].toString(),
+                                                style: TextStyle(
+                                                    color: _isNight
+                                                        ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
+                                                        : Theme.of(context).colorScheme.onSurface),
+                                              ),
                                             ),
                                           ),
                                         ),
