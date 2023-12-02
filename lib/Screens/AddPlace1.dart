@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+import 'package:weather_partner/Functions/WeatherInfo.dart';
 
 import '../Utils/GetColor.dart';
 
@@ -32,6 +34,7 @@ class _AddPlace1State extends State<AddPlace1> {
     http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       _result = jsonDecode(await response.stream.bytesToString())["data"];
+      _getting = 0;
       setState(() {});
     } else {}
   }
@@ -71,7 +74,36 @@ class _AddPlace1State extends State<AddPlace1> {
                           width: MediaQuery.of(context).size.width / 1.5,
                           child: SearchBar(
                             key: const Key("SearchBar"),
-                            onSubmitted: (keyword) {},
+                            onSubmitted: (keyword) async {
+                              _getting = 1;
+                              var request = http.Request('GET', Uri.parse('http://202.5.226.152/data'));
+                              http.StreamedResponse response = await request.send();
+                              if (response.statusCode == 200) {
+                                _result = jsonDecode(await response.stream.bytesToString())["data"];
+                                _result = _result.where((element) => element["location"].toString().contains(keyword)).toList();
+                                _getting = 0;
+                                setState(() {});
+                              } else {
+                                _getting = 2;
+                                setState(() {});
+                              }
+                              if (_result.isEmpty) {
+                                _getting = 2;
+                                setState(() {});
+                              }
+                            },
+                            onChanged: (keyword) async {
+                              if (keyword.isEmpty) {
+                                _getting = 1;
+                                var request = http.Request('GET', Uri.parse('http://202.5.226.152/data'));
+                                http.StreamedResponse response = await request.send();
+                                if (response.statusCode == 200) {
+                                  _result = jsonDecode(await response.stream.bytesToString())["data"];
+                                  _getting = 0;
+                                  setState(() {});
+                                } else {}
+                              }
+                            },
                             leading: IconButton(
                               splashColor: Colors.transparent,
                               highlightColor: Colors.transparent,
@@ -86,6 +118,12 @@ class _AddPlace1State extends State<AddPlace1> {
                   ),
                 ),
               ),
+              if (_getting == 1)
+                const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(),
+                ),
               Expanded(
                 child: Stack(
                   children: [
@@ -97,47 +135,45 @@ class _AddPlace1State extends State<AddPlace1> {
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
                             onTap: () async {
-                              // _getting = 1;
-                              // setState(() {});
-                              // var stationID = "${_coordinates[index][0].toString()},${_coordinates[index][1].toString()}";
-                              // var locationName = _result[index].toString().replaceAll(",", " ").replaceAll("[", "").replaceAll("]", "");
-                              // var box = Hive.box("Places");
-                              // var allPlace = box.values.toList();
-                              // var storageMap = {
-                              //   "SourceType": 0,
-                              //   "StationID": stationID,
-                              //   "LocationName": locationName,
-                              // };
-                              // allPlace = allPlace.where((element) => element["StationID"] == stationID).toList();
-                              // if (allPlace.isNotEmpty) {
-                              //   ScaffoldMessenger.of(context).showSnackBar(
-                              //     const SnackBar(
-                              //       content: Text("此地點已被新增過"),
-                              //     ),
-                              //   );
-                              //   return;
-                              // }
-                              // await box.add(storageMap);
-                              //
-                              // var weatherInfo =
-                              // await getWeatherInfo(locationName, _coordinates[index][0].toString(), _coordinates[index][1].toString());
-                              // var weatherBox = Hive.box("RecentWeather");
-                              // await weatherBox.put(stationID, weatherInfo);
-                              // await weatherBox.put("PlaceInfo", {
-                              //   "SourceType": 0,
-                              //   "StationID": stationID,
-                              //   "LocationName": locationName,
-                              // });
-                              // _getting = 0;
-                              // context.pop(0);
+                              _getting = 1;
+                              setState(() {});
+                              var stationID = _result[index]["uuid"];
+                              var locationName = _result[index]["location"];
+                              var box = Hive.box("Places");
+                              var allPlace = box.values.toList();
+                              var storageMap = {
+                                "SourceType": 1,
+                                "StationID": stationID,
+                                "LocationName": locationName,
+                              };
+                              allPlace = allPlace.where((element) => element["StationID"] == stationID).toList();
+                              if (allPlace.isNotEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("此地點已被新增過"),
+                                  ),
+                                );
+                                return;
+                              }
+                              await box.add(storageMap);
+
+                              var weatherInfo = getWeatherPartner(locationName, stationID);
+
+                              var weatherBox = Hive.box("RecentWeather");
+                              await weatherBox.put(stationID, await weatherInfo);
+                              await weatherBox.put("PlaceInfo", {
+                                "SourceType": 1,
+                                "StationID": stationID,
+                                "LocationName": locationName,
+                              });
+                              _getting = 0;
+                              context.pop(0);
                             },
                             child: Card(
                               color: GetColor.getSurfaceDim(Theme.of(context)),
-                              child: const ListTile(
-                                title: Text("Name"),
-                                subtitle: Text(
-                                  "經度:\n緯度:",
-                                ),
+                              child: ListTile(
+                                title: Text(_result[index]["location"]),
+                                subtitle: Text("${_result[index]["uuid"]}"),
                               ),
                             ),
                           ),
@@ -147,6 +183,10 @@ class _AddPlace1State extends State<AddPlace1> {
                     if (_getting == 2)
                       const Center(
                         child: Text("搜尋失敗或沒有結果"),
+                      ),
+                    if (_getting == 3)
+                      const Center(
+                        child: Text("失敗"),
                       ),
                   ],
                 ),

@@ -47,3 +47,18 @@ Future<Map<String, dynamic>> getWeatherInfo(String stationName, String lon, Stri
     return {"Error": "Error:$e"};
   }
 }
+
+Future<Map<String, dynamic>> getWeatherPartner(String stationName, String stationId) async {
+  var request = http.Request('GET', Uri.parse('http://202.5.226.152/data/$stationId'));
+
+  http.StreamedResponse response = await request.send();
+
+  if (response.statusCode != 200) {
+    return {"Error": "Error:${response.reasonPhrase}"};
+  }
+  var result = jsonDecode(await response.stream.bytesToString())["data"][0];
+  result["SourceType"] = 1;
+  result["StationID"] = stationId;
+  result["LocationName"] = stationName;
+  return result;
+}

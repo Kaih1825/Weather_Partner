@@ -44,6 +44,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
 
     var recent = Hive.box("RecentWeather");
+    if (recent.isEmpty) {
+      handleNoPlaces(1);
+    } else {
+      handleNoPlaces(0);
+    }
     getWeatherInInit();
 
     recent.watch().listen((event) {
@@ -52,6 +57,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           _placeInfo = {"SourceType": event.value["SourceType"], "StationID": event.value["StationID"], "LocationName": event.value["LocationName"]};
           if (event.value["SourceType"] == 0 && event.value["CurrentWeather"]["is_day"] != null) {
             _isNight = event.value["CurrentWeather"]["is_day"] == 0 ? true : false;
+          }
+          if (event.value["SourceType"] == 1) {
+            _isNight = (int.parse(event.value["time"].split(" ")[1].split(":")[0].toString()) < 6 && event.value["time"].split(" ")[2] == "AM") ||
+                (int.parse(event.value["time"].split(" ")[1].split(":")[0].toString()) > 6 && event.value["time"].split(" ")[2] == "PM");
           }
           setState(() {});
         }
@@ -70,11 +79,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
           }
         }
+        if (_placeInfo["SourceType"] == 1) {
+          var weatherInfo = await getWeatherPartner(_placeInfo["LocationName"], _placeInfo["StationID"]);
+          if (weatherInfo["Error"] == null) {
+            await recent.put(_placeInfo["StationID"], weatherInfo);
+            _placeInfo = weatherInfo;
+            _isNight = (int.parse(weatherInfo["time"].split(" ")[1].split(":")[0].toString()) < 6 && weatherInfo["time"].split(" ")[2] == "AM") ||
+                (int.parse(weatherInfo["time"].split(" ")[1].split(":")[0].toString()) > 6 && weatherInfo["time"].split(" ")[2] == "PM");
+          }
+        }
         setState(() {});
       }
     });
 
-    handleNoPlaces();
     setState(() {});
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       setState(() {});
@@ -96,10 +113,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           }
         }
       }
+      if (_placeInfo["SourceType"] == 1) {
+        var weatherInfo = await getWeatherPartner(_placeInfo["LocationName"], _placeInfo["StationID"]);
+        if (weatherInfo["Error"] == null) {
+          await recent.put(_placeInfo["StationID"], weatherInfo);
+          _placeInfo = weatherInfo;
+          _isNight = (int.parse(weatherInfo["time"].split(" ")[1].split(":")[0].toString()) < 6 && weatherInfo["time"].split(" ")[2] == "AM") ||
+              (int.parse(weatherInfo["time"].split(" ")[1].split(":")[0].toString()) > 6 && weatherInfo["time"].split(" ")[2] == "PM");
+        }
+      }
     }
   }
 
-  void handleNoPlaces() async {
+  void handleNoPlaces(int type) async {
     var request = http.Request('GET', Uri.parse('http://ip-api.com/json/'));
 
     http.StreamedResponse response = await request.send();
@@ -130,15 +156,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         await box.put(key[0]["Key"], storageMap);
       }
 
-      var weatherInfo = await getWeatherInfo(locationName, result["lon"].toString(), result["lat"].toString());
-      var weatherBox = Hive.box("RecentWeather");
-      await weatherBox.put(stationID, weatherInfo);
-      await weatherBox.put("PlaceInfo", {
-        "SourceType": 0,
-        "StationID": stationID,
-        "LocationName": locationName,
-      });
-      _placeInfo = weatherInfo;
+      if (type == 1) {
+        var weatherInfo = await getWeatherInfo(locationName, result["lon"].toString(), result["lat"].toString());
+        var weatherBox = Hive.box("RecentWeather");
+        await weatherBox.put(stationID, weatherInfo);
+        await weatherBox.put("PlaceInfo", {
+          "SourceType": 0,
+          "StationID": stationID,
+          "LocationName": locationName,
+        });
+        _placeInfo = weatherInfo;
+        _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
+      }
     } else {}
   }
 
@@ -182,6 +211,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: OpenMeteoWeatherInfo(
                           info: tisWeatherInfo,
                           isNight: _isNight,
+                        ),
+                      ),
+                    );
+                  }
+                  if (tisWeatherInfo["SourceType"] == 1) {
+                    return SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        child: Text(
+                          _placeInfo.toString(),
                         ),
                       ),
                     );
@@ -409,7 +448,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                           await box.deleteAt(box.values.toList().indexOf(allPlace[index]));
                                           var recent = Hive.box("RecentWeather");
                                           await recent.delete(allPlace[index]["StationID"]);
-                                          handleNoPlaces();
+                                          handleNoPlaces(1);
                                         },
                                         child: InkWell(
                                           onTap: () async {
@@ -420,16 +459,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                               "LocationName": allPlace[index]["LocationName"]
                                             };
                                             await box.put("PlaceInfo", _placeInfo);
-                                            var lonlat = allPlace[index]["StationID"].toString().split(",");
-                                            _fabAnimation.reverse();
-                                            var weatherInfo = await getWeatherInfo(allPlace[index]["LocationName"], lonlat[0], lonlat[1]);
-                                            var weatherBox = Hive.box("RecentWeather");
-                                            await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
-                                            _placeInfo = weatherInfo;
-                                            if (_placeInfo["CurrentWeather"]["is_day"] != null) {
-                                              _isNight = _placeInfo["CurrentWeather"]["is_day"] == 0 ? true : false;
+                                            if (allPlace[index]["SourceType"] == 0) {
+                                              var lonlat = allPlace[index]["StationID"].toString().split(",");
+                                              var weatherInfo = await getWeatherInfo(allPlace[index]["LocationName"], lonlat[0], lonlat[1]);
+                                              var weatherBox = Hive.box("RecentWeather");
+                                              await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
                                             }
-                                            setState(() {});
+                                            if (allPlace[index]["SourceType"] == 1) {
+                                              var weatherBox = Hive.box("RecentWeather");
+                                              var weatherInfo =
+                                                  await getWeatherPartner(allPlace[index]["LocationName"], allPlace[index]["StationID"]);
+                                              await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
+                                            }
+                                            _fabAnimation.reverse();
                                           },
                                           child: Card(
                                             color: _isNight
