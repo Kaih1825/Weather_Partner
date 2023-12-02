@@ -12,9 +12,7 @@ import '../Functions/WeatherInfo.dart';
 import '../Utils/ApiKeys.dart';
 
 class AddPlace0 extends StatefulWidget {
-  final int placeType;
-
-  const AddPlace0({super.key, required this.placeType});
+  const AddPlace0({super.key});
 
   @override
   State<AddPlace0> createState() => _AddPlace0State();
@@ -71,7 +69,9 @@ class _AddPlace0State extends State<AddPlace0> {
       _getting = 2;
       setState(() {});
       print("Error:${response.reasonPhrase}");
-      print('https://api.maptiler.com/geocoding/$keyword.json?key=$maptiler');
+      if (kDebugMode) {
+        print('https://api.maptiler.com/geocoding/$keyword.json?key=$maptiler');
+      }
     }
   }
 

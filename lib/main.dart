@@ -8,7 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:window_size/window_size.dart';
 
-import 'Screens/AddPlce.dart';
+import 'Screens/AddPlace0.dart';
+import 'Screens/AddPlace1.dart';
 import 'Screens/HomeScreen.dart';
 
 void main() async {
@@ -64,11 +65,19 @@ class _MainState extends State<Main> {
                   },
                 ),
                 GoRoute(
-                    name: "/ap0",
-                    path: "/AddPlace0",
-                    builder: (context, state) {
-                      return AddPlace0(placeType: int.parse(state.uri.queryParameters["Type"].toString()));
-                    })
+                  name: "/ap0",
+                  path: "/AddPlace0",
+                  builder: (context, state) {
+                    return const AddPlace0();
+                  },
+                ),
+                GoRoute(
+                  name: "/ap1",
+                  path: "/AddPlace1",
+                  builder: (context, state) {
+                    return const AddPlace1();
+                  },
+                )
               ],
             ),
           ),

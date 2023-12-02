@@ -55,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           }
           setState(() {});
         }
+        // ignore: empty_catches
       } catch (ex) {}
     });
 
@@ -138,9 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         "LocationName": locationName,
       });
       _placeInfo = weatherInfo;
-    } else {
-      print(response.reasonPhrase);
-    }
+    } else {}
   }
 
   @override
@@ -321,6 +320,50 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       ),
                                     ),
                                   ),
+                                  InkWell(
+                                    onTap: () {
+                                      _sourceType = 1;
+                                      _fabPageController.animateToPage(1, duration: const Duration(milliseconds: 200), curve: Curves.linearToEaseOut);
+                                      setState(() {});
+                                    },
+                                    child: Card(
+                                      color: _isNight ? GetColor.getSecondaryContainerDark(Theme.of(context)) : Theme.of(context).colorScheme.surface,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 10),
+                                              child: SizedBox(
+                                                height: 20,
+                                                child: Image.asset(
+                                                  "assets/logo_rm.png",
+                                                  height: 30,
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                                              child: Text(
+                                                "Weather Partner",
+                                                style: TextStyle(
+                                                    color: _isNight
+                                                        ? GetColor.getOnSecondaryContainerDark(Theme.of(context))
+                                                        : Theme.of(context).colorScheme.onSurface),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.arrow_forward_ios_outlined,
+                                              color: Colors.grey,
+                                              size: 13,
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -334,12 +377,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   onPressed: () {
                                     _fabPageController.animateToPage(0, duration: const Duration(milliseconds: 200), curve: Curves.linearToEaseOut);
                                   },
-                                  icon: Icon(Icons.arrow_back_ios_new, color: Colors.grey),
+                                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.grey),
                                 ),
                                 const Spacer(),
                                 ElevatedButton(
                                   onPressed: () async {
-                                    var res = await context.pushNamed("/ap0", queryParameters: {"Type": _sourceType.toString()});
+                                    var res = await context.pushNamed("/ap$_sourceType");
                                     if (res == 0) {
                                       _fabAnimation.reverse();
                                     }

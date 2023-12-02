@@ -27,7 +27,7 @@ class _OpenMeteoWeatherInfoState extends State<OpenMeteoWeatherInfo> {
   var _weatherDescriptions = {};
   var _dailyIndex = 0;
   final _uviScrollController = ScrollController();
-  final _7DaysPageContrller = PageController();
+  final _dailyPageContrller = PageController();
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _OpenMeteoWeatherInfoState extends State<OpenMeteoWeatherInfo> {
   @override
   void dispose() {
     _uviScrollController.dispose();
-    _7DaysPageContrller.dispose();
+    _dailyPageContrller.dispose();
     super.dispose();
   }
 
@@ -444,7 +444,7 @@ class _OpenMeteoWeatherInfoState extends State<OpenMeteoWeatherInfo> {
                                                         width: 30,
                                                         child: Center(
                                                           child: Text(
-                                                            "${i}時",
+                                                            "$i時",
                                                             style: const TextStyle(color: Colors.white),
                                                             softWrap: false,
                                                           ),
@@ -563,7 +563,7 @@ class _OpenMeteoWeatherInfoState extends State<OpenMeteoWeatherInfo> {
                               ),
                               Expanded(
                                 child: PageView(
-                                  controller: _7DaysPageContrller,
+                                  controller: _dailyPageContrller,
                                   scrollDirection: Axis.horizontal,
                                   children: [
                                     Padding(
@@ -578,9 +578,8 @@ class _OpenMeteoWeatherInfoState extends State<OpenMeteoWeatherInfo> {
                                             onTap: () {
                                               setState(() {
                                                 _dailyIndex = index;
-                                                _7DaysPageContrller.animateToPage(1,
+                                                _dailyPageContrller.animateToPage(1,
                                                     duration: const Duration(milliseconds: 200), curve: Curves.linearToEaseOut);
-                                                print(_dailyIndex);
                                               });
                                             },
                                             child: SizedBox(
@@ -637,7 +636,7 @@ class _OpenMeteoWeatherInfoState extends State<OpenMeteoWeatherInfo> {
                                             children: [
                                               IconButton(
                                                   onPressed: () {
-                                                    _7DaysPageContrller.animateToPage(0,
+                                                    _dailyPageContrller.animateToPage(0,
                                                         duration: const Duration(milliseconds: 200), curve: Curves.linearToEaseOut);
                                                   },
                                                   icon: const Icon(Icons.navigate_before, color: Colors.white)),
