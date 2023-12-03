@@ -30,7 +30,7 @@ class _AddPlace1State extends State<AddPlace1> {
 
   void parseJson() async {
     _getting = 1;
-    var request = http.Request('GET', Uri.parse('http://202.5.226.152/data'));
+    var request = http.Request('GET', Uri.parse('https://weatherpartner.tplinkdns.com/data'));
     http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       _result = jsonDecode(await response.stream.bytesToString())["data"];
@@ -76,7 +76,7 @@ class _AddPlace1State extends State<AddPlace1> {
                             key: const Key("SearchBar"),
                             onSubmitted: (keyword) async {
                               _getting = 1;
-                              var request = http.Request('GET', Uri.parse('http://202.5.226.152/data'));
+                              var request = http.Request('GET', Uri.parse('https://weatherpartner.tplinkdns.com/data'));
                               http.StreamedResponse response = await request.send();
                               if (response.statusCode == 200) {
                                 _result = jsonDecode(await response.stream.bytesToString())["data"];
@@ -95,7 +95,7 @@ class _AddPlace1State extends State<AddPlace1> {
                             onChanged: (keyword) async {
                               if (keyword.isEmpty) {
                                 _getting = 1;
-                                var request = http.Request('GET', Uri.parse('http://202.5.226.152/data'));
+                                var request = http.Request('GET', Uri.parse('https://weatherpartner.tplinkdns.com/data'));
                                 http.StreamedResponse response = await request.send();
                                 if (response.statusCode == 200) {
                                   _result = jsonDecode(await response.stream.bytesToString())["data"];
