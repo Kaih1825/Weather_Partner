@@ -1,4 +1,4 @@
-package com.example.weather_partner
+package com.kapp.weather_partner
 
 import android.graphics.Color
 import android.os.Build
