@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "weather_partner" "\0"
+            VALUE "CompanyName", "com.kapp" "\0"
+            VALUE "FileDescription", "Weather Partner" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "weather_partner" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "weather_partner.exe" "\0"
-            VALUE "ProductName", "weather_partner" "\0"
+            VALUE "InternalName", "Weather Partner" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 com.kapp. All rights reserved." "\0"
+            VALUE "OriginalFilename", "WeatherPartner.exe" "\0"
+            VALUE "ProductName", "Weather Partner" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
