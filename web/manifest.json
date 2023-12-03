@@ -1,11 +1,11 @@
 {
-    "name": "weather_partner",
-    "short_name": "weather_partner",
+    "name": "Weather Partner",
+    "short_name": "Weather Partner",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A weather website for Weather Partner and Open Meteo.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
