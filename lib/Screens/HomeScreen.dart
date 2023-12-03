@@ -127,13 +127,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void handleNoPlaces(int type) async {
-    var request = http.Request('GET', Uri.parse('http://ip-api.com/json/'));
+    var request = http.Request('GET', Uri.parse('https://freeipapi.com/api/json/'));
 
     http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       var result = jsonDecode(await response.stream.bytesToString());
-      var stationID = "${result["lon"]},${result["lat"]}";
-      var locationName = "IP所在地 ${result["city"]}";
+      var stationID = "${result["longitude"]},${result["latitude"]}";
+      var locationName = "IP所在地 ${result["cityName"]}";
       var box = Hive.box("Places");
       var storageMap = {
         "SourceType": 0,
@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
 
       if (type == 1) {
-        var weatherInfo = await getWeatherInfo(locationName, result["lon"].toString(), result["lat"].toString());
+        var weatherInfo = await getWeatherInfo(locationName, result["longitude"].toString(), result["latitude"].toString());
         var weatherBox = Hive.box("RecentWeather");
         await weatherBox.put(stationID, weatherInfo);
         await weatherBox.put("PlaceInfo", {
@@ -449,7 +449,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                           await box.deleteAt(box.values.toList().indexOf(allPlace[index]));
                                           var recent = Hive.box("RecentWeather");
                                           await recent.delete(allPlace[index]["StationID"]);
-                                          handleNoPlaces(1);
+                                          if (_placeInfo["LocationName"] == allPlace[index]["LocationName"]) {
+                                            handleNoPlaces(1);
+                                          }
                                         },
                                         child: InkWell(
                                           onTap: () async {

@@ -59,7 +59,6 @@ class _AddPlace0State extends State<AddPlace0> {
         }
         setState(() {});
       }
-      print(_result);
       _getting = 0;
       if (_result.isEmpty) {
         _getting = 2;
@@ -68,7 +67,6 @@ class _AddPlace0State extends State<AddPlace0> {
     } else {
       _getting = 2;
       setState(() {});
-      print("Error:${response.reasonPhrase}");
       if (kDebugMode) {
         print('https://api.maptiler.com/geocoding/$keyword.json?key=$maptiler');
       }
