@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:weather_partner/Functions/WeatherInfo.dart';
 import 'package:weather_partner/Utils/GetColor.dart';
 import 'package:weather_partner/Widgets/OpenMeteoWeatherInfo.dart';
+import 'package:weather_partner/Widgets/WeatherPartnerWeatherInfo.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -218,11 +219,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   if (tisWeatherInfo["SourceType"] == 1) {
                     return SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                        child: Text(
-                          _placeInfo.toString(),
-                        ),
-                      ),
+                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                          child: WeatherPartnerWeatherInfo(
+                            info: tisWeatherInfo,
+                            isNight: _isNight,
+                          )),
                     );
                   }
                 }
@@ -452,6 +453,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         },
                                         child: InkWell(
                                           onTap: () async {
+                                            _fabAnimation.reverse();
                                             var box = Hive.box("RecentWeather");
                                             _placeInfo = {
                                               "SourceType": allPlace[index]["SourceType"],
@@ -471,7 +473,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                                   await getWeatherPartner(allPlace[index]["LocationName"], allPlace[index]["StationID"]);
                                               await weatherBox.put(allPlace[index]["StationID"], weatherInfo);
                                             }
-                                            _fabAnimation.reverse();
                                           },
                                           child: Card(
                                             color: _isNight

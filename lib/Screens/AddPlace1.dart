@@ -122,7 +122,9 @@ class _AddPlace1State extends State<AddPlace1> {
                 const SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
                 ),
               Expanded(
                 child: Stack(

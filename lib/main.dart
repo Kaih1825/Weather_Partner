@@ -15,7 +15,7 @@ import 'Screens/HomeScreen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowTitle('天氣夥伴 Weather Partner');
+    setWindowTitle('Weather Partner');
     setWindowMinSize(const Size(450, 300));
     setWindowMaxSize(Size.infinite);
   }
