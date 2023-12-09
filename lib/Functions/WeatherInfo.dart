@@ -49,7 +49,7 @@ Future<Map<String, dynamic>> getWeatherInfo(String stationName, String lon, Stri
 }
 
 Future<Map<String, dynamic>> getWeatherPartner(String stationName, String stationId) async {
-  var request = http.Request('GET', Uri.parse('https://ohhfuck.ddns.net/data/$stationId'));
+  var request = http.Request('GET', Uri.parse('https://weatherpartner.tplinkdns.com/data/$stationId'));
 
   http.StreamedResponse response = await request.send();
 
