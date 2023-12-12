@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Weather Partner
+Comment=A sleek and user-friendly weather application.
+Exec=weather-partner
+Icon=${SNAP}/meta/gui/weather_partner.png
+Terminal=false
+Type=Application
+Categories=Utility;

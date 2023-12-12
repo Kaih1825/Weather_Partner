@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:window_size/window_size.dart';
 
 import 'Screens/AddPlace0.dart';
@@ -19,7 +20,8 @@ void main() async {
     setWindowMinSize(const Size(450, 300));
     setWindowMaxSize(Size.infinite);
   }
-  await Hive.initFlutter();
+  final suppDir = await getApplicationSupportDirectory();
+  await Hive.initFlutter(suppDir.path);
   await Hive.openBox("Places");
   await Hive.openBox("RecentWeather");
   runApp(const Main());
