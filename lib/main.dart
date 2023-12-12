@@ -20,8 +20,12 @@ void main() async {
     setWindowMinSize(const Size(450, 300));
     setWindowMaxSize(Size.infinite);
   }
-  final suppDir = await getApplicationSupportDirectory();
-  await Hive.initFlutter(suppDir.path);
+  if (!kIsWeb) {
+    final suppDir = await getApplicationSupportDirectory();
+    await Hive.initFlutter(suppDir.path);
+  } else {
+    Hive.initFlutter();
+  }
   await Hive.openBox("Places");
   await Hive.openBox("RecentWeather");
   runApp(const Main());
