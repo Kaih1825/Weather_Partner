@@ -23,7 +23,7 @@ class _WeatherPartnerWeatherInfoState extends State<WeatherPartnerWeatherInfo> {
   String timeParse() {
     var time = info["time"].toString().split(" ");
     var hour = int.parse(time[1].split(":")[0]);
-    if (time[2] == "PM") {
+    if (time[2] == "PM" && hour != 12) {
       hour += 12;
     }
     return "${time[0].replaceAll("-", "/")} ${hour.toString()}:${time[1].split(":")[1]}";
