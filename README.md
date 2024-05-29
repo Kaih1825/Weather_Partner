@@ -8,5 +8,3 @@
 ## [Live Demo](https://kaih1825.github.io/)
 ![Demo](https://github.com/Kaih1825/Weather_Partner/blob/master/README%20Resources/Demo%20Multiple%20Devices.png?raw=true)
 </div>
-
-# Install
